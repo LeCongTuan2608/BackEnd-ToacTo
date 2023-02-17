@@ -38,7 +38,6 @@ module.exports.newPostsHandler = async (req, res, next) => {
       //       errorController.errorHandler(res, 'You are not allowed to create this post', 403),
       //    );
       // }
-      // upload.fields([{ name: 'images' }, { name: 'videos' }]),
 
       // const newPosts = await db.Posts.create({
       //    audience: formData?.audience || 'public',
