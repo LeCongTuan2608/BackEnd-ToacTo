@@ -2,14 +2,15 @@ const db = require('../models/index');
 const errorController = require('./errorController');
 const dotenv = require('dotenv');
 const Sequelize = require('sequelize');
-const cloudinary = require('../utils/cloudinary');
 dotenv.config();
 
-// upload file
-const uploadFile = async (file, folder, type) => {
-   const result = cloudinary.uploader.upload(file, { folder, resource_type: type });
-   return result;
-};
+// const uploadFile = async (file, folder, type) => {
+//    const result = await cloudinary.uploader.upload(file, {
+//       folder,
+//       resource_type: type,
+//    });
+//    return result;
+// };
 
 // get all post
 module.exports.getAllPostsHandler = async (req, res, next) => {
@@ -27,48 +28,46 @@ module.exports.getAllPostsHandler = async (req, res, next) => {
       errorController.serverErrorHandle(error, res);
    }
 };
-
 // new posts
 module.exports.newPostsHandler = async (req, res, next) => {
    try {
-      const formData = { ...req.body, ...req.files };
-      if (req.body.userPost !== req.user.user_name) {
-         return next(
-            errorController.errorHandler(res, 'You are not allowed to create this post', 403),
-         );
-      }
+      const formData = { ...req.body };
+      // check user
+      // if (req.body.userPost !== req.user.user_name) {
+      //    return next(
+      //       errorController.errorHandler(res, 'You are not allowed to create this post', 403),
+      //    );
+      // }
 
-      const newPosts = await db.Posts.create({
-         audience: formData?.audience || 'public',
-         content: formData?.content,
-         user_posts: req.user.user_name,
-      });
-      if (formData.images && formData.images.length !== 0) {
-         const results = await Promise.all(
-            formData?.images.map(async (file) => {
-               const file1 = { ...file, url: 'https://bom.so/DxnKdV' }; // test
-               const result = await uploadFile(file1.url, 'post', file1.mimetype);
+      // hmmm bó tay :v
+      // uploadImage.fields(formData.images); // em nghĩ cái này là middleware, mà đã là mdw thì chỉ dùng được ở bên router thoi à :v
+      // cơ chế của node anh đéobiếtmơi sghe
+      // ở đây ví dụ bây giờ anh muốn lấy ra field uséPosới content thì lấy sao
 
-               // return về 1 url của ảnh và 1 type
-               return {
-                  mimetype: result.resource_type,
-                  url: result.secure_url, //url
-               };
-            }),
-         );
-         return next(
-            res.status(201).json({
-               results,
-            }),
-            // console.log(results),
-         );
-         // await db.Posts_img.bulkCreate(listImages);
-      }
-      // if (formData.video && formData.video.length !== 0) {
-      //    const listVideo = formData.video.map((item) => {
-      //       return { video: item.originalname, posts_id: newPosts.posts_id };
+      // upload.fields([{ name: 'images' }, { name: 'videos' }]),
+
+      // const newPosts = await db.Posts.create({
+      //    audience: formData?.audience || 'public',
+      //    content: formData?.content,
+      //    user_posts: req.user.user_name,
+      // });
+      // if (req.files && formData.images && formData.images.length !== 0) {
+      //    const listImages = formData.images.map((file) => {
+      //       return { img: file.path, posts_id: newPosts.posts_id };
       //    });
-      //    await db.Posts_video.bulkCreate(listVideo);
+      //    await db.Posts_img.bulkCreate(listImages);
+      // }
+      // if (req.files && formData.videos && formData.videos.length !== 0) {
+      //    // const listVideo = formData.videos.map((video) => {
+      //    //    return { video: videos.originalname, posts_id: newPosts.posts_id };
+      //    // });
+      //    // await db.Posts_video.bulkCreate(listVideo);
+      //    return next(
+      //       res.status(201).json({
+      //          formData,
+      //          mes: 'create new posts is success!',
+      //       }),
+      //    );
       // }
       next(
          res.status(201).json({

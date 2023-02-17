@@ -4,7 +4,8 @@ const { route } = require('express/lib/router');
 const postController = require('../controllers/postsController');
 const authenToken = require('../controllers/middlewareController');
 const multer = require('multer');
-const upload = multer({ dest: '../uploads/' });
+const { storageFile } = require('../utils/cloudinary');
+// const upload = multer({ storage: storageFile });
 
 router
    .route('posts/blocked/:postId')
@@ -23,14 +24,11 @@ router
 router.route('/posts/new').post(
    [
       authenToken,
-      upload.fields([
-         { name: 'images', maxCount: 1 },
-         { name: 'video', maxCount: 1 },
-      ]),
+      // upload.fields([{ name: 'images' }, { name: 'videos' }]),
    ],
    postController.newPostsHandler,
-); // add new post
-
+);
+//
 router.route('/').get([authenToken], postController.getAllPostsHandler); //get all feed post
 
 module.exports = router;

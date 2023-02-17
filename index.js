@@ -3,6 +3,8 @@ const morgan = require('morgan');
 const connectDB = require('./database/db');
 // parse json
 const bodyParser = require('body-parser');
+const multer = require('multer');
+const forms = multer();
 // router
 const authRouter = require('./routes/authRouter');
 const refreshTokenRouter = require('./routes/refreshTokenRouter');
@@ -23,7 +25,8 @@ app.use(
       extended: true,
    }),
 );
-// app.use(bodyParser());
+app.use(forms.array());
+
 // tao db
 sequelize
    .sync()
