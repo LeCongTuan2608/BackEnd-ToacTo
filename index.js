@@ -25,7 +25,7 @@ app.use(
       extended: true,
    }),
 );
-app.use(forms.array());
+// app.use(forms.array());
 
 // tao db
 sequelize

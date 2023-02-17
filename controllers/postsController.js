@@ -2,6 +2,8 @@ const db = require('../models/index');
 const errorController = require('./errorController');
 const dotenv = require('dotenv');
 const Sequelize = require('sequelize');
+const cloudinary = require('cloudinary').v2;
+
 dotenv.config();
 
 // const uploadFile = async (file, folder, type) => {
@@ -11,12 +13,25 @@ dotenv.config();
 //    });
 //    return result;
 // };
+const removeFile = async (files) => {
+   let fileList = [];
+   if (files.images) fileList = [...files?.images];
+   if (files.videos) fileList = [...fileList, ...files?.videos];
+   await cloudinary.api.delete_resources(fileList.map((file) => file.filename));
+};
 
 // get all post
 module.exports.getAllPostsHandler = async (req, res, next) => {
    try {
       const feedPosts = await db.Posts.findAll({
          order: Sequelize.literal('rand()'),
+         // attributes: { exclude: ['createdAt', 'updatedAt'] },
+         include: [
+            { model: db.Posts_image, as: 'images' },
+            { model: db.Posts_video, as: 'videos' },
+            { model: db.Comments, as: 'comments' },
+            { model: db.Liked, as: 'likes' },
+         ],
       });
       next(
          res.status(200).json({
@@ -31,37 +46,36 @@ module.exports.getAllPostsHandler = async (req, res, next) => {
 // new posts
 module.exports.newPostsHandler = async (req, res, next) => {
    try {
-      const formData = { ...req.body };
+      const formData = {
+         ...req.body,
+         ...req.files,
+      };
       // check user
-      // if (req.body.userPost !== req.user.user_name) {
-      //    return next(
-      //       errorController.errorHandler(res, 'You are not allowed to create this post', 403),
-      //    );
-      // }
-
-      // const newPosts = await db.Posts.create({
-      //    audience: formData?.audience || 'public',
-      //    content: formData?.content,
-      //    user_posts: req.user.user_name,
-      // });
-      // if (req.files && formData.images && formData.images.length !== 0) {
-      //    const listImages = formData.images.map((file) => {
-      //       return { img: file.path, posts_id: newPosts.posts_id };
-      //    });
-      //    await db.Posts_img.bulkCreate(listImages);
-      // }
-      // if (req.files && formData.videos && formData.videos.length !== 0) {
-      //    // const listVideo = formData.videos.map((video) => {
-      //    //    return { video: videos.originalname, posts_id: newPosts.posts_id };
-      //    // });
-      //    // await db.Posts_video.bulkCreate(listVideo);
-      //    return next(
-      //       res.status(201).json({
-      //          formData,
-      //          mes: 'create new posts is success!',
-      //       }),
-      //    );
-      // }
+      if (req.body.userPost !== req.user.user_name) {
+         req.files && removeFile(req.files);
+         return next(
+            errorController.errorHandler(res, 'You are not allowed to create this post', 403),
+         );
+      }
+      const newPosts = await db.Posts.create({
+         audience: formData?.audience || 'public',
+         content: formData?.content,
+         user_posts: req.user.user_name,
+      });
+      if (req.files) {
+         if (formData.images && formData.images.length !== 0) {
+            const listImages = formData.images.map((image) => {
+               return { url: image.path, file_name: image.filename, posts_id: newPosts.posts_id };
+            });
+            await db.Posts_image.bulkCreate(listImages);
+         }
+         if (formData.videos && formData.videos.length !== 0) {
+            const listVideo = formData.videos.map((video) => {
+               return { url: video.path, file_name: video.filename, posts_id: newPosts.posts_id };
+            });
+            await db.Posts_video.bulkCreate(listVideo);
+         }
+      }
       next(
          res.status(201).json({
             formData,
@@ -69,6 +83,7 @@ module.exports.newPostsHandler = async (req, res, next) => {
          }),
       );
    } catch (error) {
+      removeFile(req.files);
       console.log('error', error);
       errorController.serverErrorHandle(error, res);
    }
@@ -77,6 +92,23 @@ module.exports.newPostsHandler = async (req, res, next) => {
 // get posts by id
 module.exports.getPostsByIdHandler = async (req, res, next) => {
    try {
+      if (!req.params.id) {
+         return next(errorController.errorHandler(res, 'This post could not be found!', 404));
+      }
+      const result = await db.Posts.findOne({
+         where: { posts_id: req.params.id },
+         include: [
+            { model: db.Posts_image, as: 'images' },
+            { model: db.Posts_video, as: 'videos' },
+            { model: db.Comments, as: 'comments' },
+            { model: db.Liked, as: 'likes' },
+         ],
+      });
+      next(
+         res.status(200).json({
+            result,
+         }),
+      );
    } catch (error) {
       console.log('error', error);
       errorController.serverErrorHandle(error, res);

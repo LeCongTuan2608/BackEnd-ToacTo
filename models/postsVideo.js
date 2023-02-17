@@ -9,12 +9,16 @@ module.exports = (sequelize, DataTypes) => {
        */
       static associate(models) {
          // define association here
-         models.Posts.hasMany(Posts_video, { foreignKey: 'posts_id' });
+         models.Posts.hasMany(Posts_video, { as: 'videos', foreignKey: 'posts_id' });
       }
    }
    Posts_video.init(
       {
-         video: {
+         url: {
+            type: DataTypes.STRING,
+            allowNull: false,
+         },
+         file_name: {
             type: DataTypes.STRING,
             allowNull: false,
          },
