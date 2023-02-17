@@ -38,12 +38,6 @@ module.exports.newPostsHandler = async (req, res, next) => {
       //       errorController.errorHandler(res, 'You are not allowed to create this post', 403),
       //    );
       // }
-
-      // hmmm bó tay :v
-      // uploadImage.fields(formData.images); // em nghĩ cái này là middleware, mà đã là mdw thì chỉ dùng được ở bên router thoi à :v
-      // cơ chế của node anh đéobiếtmơi sghe
-      // ở đây ví dụ bây giờ anh muốn lấy ra field uséPosới content thì lấy sao
-
       // upload.fields([{ name: 'images' }, { name: 'videos' }]),
 
       // const newPosts = await db.Posts.create({
