@@ -15,8 +15,8 @@ dotenv.config();
 // };
 const removeFile = async (files) => {
    let fileList = [];
-   if (files.images) fileList = [...files?.images];
-   if (files.videos) fileList = [...fileList, ...files?.videos];
+   if (files.images) fileList = [...files.images];
+   if (files.videos) fileList = [...fileList, ...files.videos];
    await cloudinary.api.delete_resources(fileList.map((file) => file.filename));
 };
 
@@ -92,8 +92,8 @@ module.exports.newPostsHandler = async (req, res, next) => {
 // get posts by id
 module.exports.getPostsByIdHandler = async (req, res, next) => {
    try {
-      if (!req.params.id) {
-         return next(errorController.errorHandler(res, 'This post could not be found!', 404));
+      if (!Number.isInteger(req.params.id)) {
+         return next(errorController.errorHandler(res, 'id cannot be blank!', 404));
       }
       const result = await db.Posts.findOne({
          where: { posts_id: req.params.id },
@@ -104,6 +104,8 @@ module.exports.getPostsByIdHandler = async (req, res, next) => {
             { model: db.Liked, as: 'likes' },
          ],
       });
+      if (result === null)
+         return next(errorController.errorHandler(res, 'This post could not be found', 404));
       next(
          res.status(200).json({
             result,
@@ -127,6 +129,10 @@ module.exports.updatePostsByIdHandler = async (req, res, next) => {
 // delete posts by id
 module.exports.deletePostsByIdHandler = async (req, res, next) => {
    try {
+      const deletePosts = await db.Posts.destroy({ where: { posts_id: req.params.id } });
+      if (deletePosts === 0)
+         return next(errorController.errorHandler(res, 'This post could not be found', 404));
+      next(res.status(200).json({ mes: 'delete posts is success' }));
    } catch (error) {
       console.log('error', error);
       errorController.serverErrorHandle(error, res);
