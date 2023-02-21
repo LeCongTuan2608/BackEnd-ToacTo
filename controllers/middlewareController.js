@@ -11,8 +11,6 @@ const authenToken = (req, res, next) => {
       if (!token) return errorController.errorHandler(res, 'No token provided', 401);
       jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
          if (err) return errorController.errorHandler(res, 'Token invalid', 401);
-         delete user.iat;
-         delete user.exp;
          req.user = user;
          next();
       });

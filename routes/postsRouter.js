@@ -6,11 +6,10 @@ const authenToken = require('../controllers/middlewareController');
 //
 const multer = require('multer');
 const { storageFile } = require('../utils/cloudinary');
-const upload = multer({ dest: 'uploads/' });
 const uploadFile = multer({ storage: storageFile });
 
 router
-   .route('posts/blocked/:postId')
+   .route('/posts/blocked/:id')
    .get([authenToken], postController.getPostsBlockedByIdHandler)
    .post([authenToken], postController.blockPostsHandler)
    .delete([authenToken], postController.deletePostsBlockedHandler); //get feed posts blocked

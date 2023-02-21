@@ -4,5 +4,5 @@ module.exports.serverErrorHandle = (err, res) => {
 };
 
 module.exports.errorHandler = (res, message, statusCode) => {
-   res.status(statusCode).json(message);
+   res.status(statusCode).json({ mes: message });
 };

@@ -3,7 +3,7 @@ const errorController = require('./errorController');
 const dotenv = require('dotenv');
 const Sequelize = require('sequelize');
 const cloudinary = require('cloudinary').v2;
-
+const { Op } = require('sequelize');
 dotenv.config();
 
 // const uploadFile = async (file, folder, type) => {
@@ -25,17 +25,28 @@ module.exports.getAllPostsHandler = async (req, res, next) => {
    try {
       const feedPosts = await db.Posts.findAll({
          order: Sequelize.literal('rand()'),
-         // attributes: { exclude: ['createdAt', 'updatedAt'] },
+         attributes: { exclude: ['user_posts'] },
          include: [
+            {
+               model: db.Users,
+               attributes: ['user_name', 'full_name', 'relationship', 'avatar', 'about'],
+            },
             { model: db.Posts_image, as: 'images' },
             { model: db.Posts_video, as: 'videos' },
             { model: db.Comments, as: 'comments' },
             { model: db.Liked, as: 'likes' },
+            { model: db.Blocked_posts, as: 'block_posts' },
          ],
+      });
+      const results = feedPosts.filter((post) => {
+         const block = post.block_posts.filter((item) => {
+            return item.user_blocked_posts === req.user.user_name;
+         });
+         return block.length !== 1;
       });
       next(
          res.status(200).json({
-            feedPosts,
+            results,
          }),
       );
    } catch (error) {
@@ -78,7 +89,7 @@ module.exports.newPostsHandler = async (req, res, next) => {
       }
       next(
          res.status(201).json({
-            formData,
+            // formData,
             mes: 'create new posts is success!',
          }),
       );
@@ -160,6 +171,21 @@ module.exports.getPostsBlockedByIdHandler = async (req, res, next) => {
 // block posts
 module.exports.blockPostsHandler = async (req, res, next) => {
    try {
+      const [posts_id, user_blocked_posts] = [req.params.id, req.user.user_name];
+      const [blockPosts, created] = await db.Blocked_posts.findOrCreate({
+         where: { posts_id, user_blocked_posts },
+         default: {
+            posts_id,
+            user_blocked_posts,
+         },
+      });
+      if (!created)
+         return next(errorController.errorHandler(res, 'This post has been blocked!', 404));
+      next(
+         res.status(201).json({
+            mes: 'blocked posts is success!',
+         }),
+      );
    } catch (error) {
       console.log('error', error);
       errorController.serverErrorHandle(error, res);

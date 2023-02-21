@@ -9,8 +9,15 @@ module.exports = (sequelize, DataTypes) => {
        */
       static associate(models) {
          // define association here
-         Blocked_posts.belongsTo(models.Users);
-         models.Users.hasMany(Blocked_posts);
+         Blocked_posts.belongsTo(models.Users, {
+            foreignKey: 'user_blocked_posts',
+         });
+         models.Users.hasMany(Blocked_posts, {
+            foreignKey: 'user_blocked_posts',
+         });
+
+         Blocked_posts.belongsTo(models.Posts, { foreignKey: 'posts_id', as: 'block_posts' });
+         models.Posts.hasMany(Blocked_posts, { foreignKey: 'posts_id', as: 'block_posts' });
       }
    }
    Blocked_posts.init(
@@ -18,6 +25,7 @@ module.exports = (sequelize, DataTypes) => {
          posts_id: {
             type: DataTypes.INTEGER,
             allowNull: false,
+            type: DataTypes.INTEGER,
          },
          user_blocked_posts: {
             type: DataTypes.STRING,
