@@ -18,7 +18,7 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: false,
          },
-         file_name: {
+         filename: {
             type: DataTypes.STRING,
             allowNull: false,
          },

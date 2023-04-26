@@ -14,12 +14,15 @@ router
    .post([authenToken], postController.blockPostsHandler)
    .delete([authenToken], postController.deletePostsBlockedHandler); //get feed posts blocked
 
-router.route('posts/blocked').get([authenToken], postController.getAllPostsBlockedHandler); //get all posts blocked
+router.route('/posts/blocked').get([authenToken], postController.getAllPostsBlockedHandler); //get all posts blocked
 
 router
    .route('/posts/by-id/:id')
    .get([authenToken], postController.getPostsByIdHandler)
-   .put([authenToken], postController.updatePostsByIdHandler)
+   .patch(
+      [authenToken, uploadFile.fields([{ name: 'images' }, { name: 'videos' }])],
+      postController.updatePostsByIdHandler,
+   )
    .delete([authenToken], postController.deletePostsByIdHandler); // get feed post by id
 
 router

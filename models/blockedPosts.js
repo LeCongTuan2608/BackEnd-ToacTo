@@ -16,7 +16,7 @@ module.exports = (sequelize, DataTypes) => {
             foreignKey: 'user_blocked_posts',
          });
 
-         Blocked_posts.belongsTo(models.Posts, { foreignKey: 'posts_id', as: 'block_posts' });
+         Blocked_posts.belongsTo(models.Posts, { foreignKey: 'posts_id', as: 'posts' });
          models.Posts.hasMany(Blocked_posts, { foreignKey: 'posts_id', as: 'block_posts' });
       }
    }

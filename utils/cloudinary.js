@@ -11,13 +11,6 @@ cloudinary.config({
    api_secret: process.env.CLOUDINARY_API_SECRET,
    secure: true,
 });
-const storage = new CloudinaryStorage({
-   cloudinary: cloudinary,
-   // allowedFormats: ['jpeg', 'jpg', 'png'],
-   params: {
-      folder: 'post/images',
-   },
-});
 
 const storageFile = new CloudinaryStorage({
    cloudinary: cloudinary,
@@ -33,13 +26,7 @@ const storageFile = new CloudinaryStorage({
       resource_type: 'auto',
    },
 });
-
-// const upload = multer({ storage: storage });
-
-// module.exports = upload;
 module.exports = {
    cloudinary,
-   storage,
-
    storageFile,
-}; // thằng này gọi ở đau ?
+};
