@@ -1,10 +1,8 @@
-const mysql = require('mysql2');
 const dotenv = require('dotenv');
 const { Sequelize } = require('sequelize');
 dotenv.config();
-
 const sequelize = new Sequelize(process.env.DATABASE, process.env.USER, process.env.PASSWORD, {
-   host: 'localhost',
+   host: process.env.HOST,
    dialect: 'mysql',
    logging: false,
 });

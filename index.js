@@ -1,6 +1,9 @@
 const express = require('express');
 const morgan = require('morgan');
 const connectDB = require('./database/db');
+const db = require('./models/index');
+const bcrypt = require('bcryptjs');
+const saltRounds = 10;
 // parse json
 const bodyParser = require('body-parser');
 const multer = require('multer');
@@ -12,6 +15,9 @@ const userRouter = require('./routes/userRouter');
 const postRouter = require('./routes/postsRouter');
 const { sequelize } = require('./models');
 
+const hashingPassword = (password) => {
+   return bcrypt.hashSync(password, saltRounds);
+};
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -30,8 +36,26 @@ app.use(
 // tao db
 sequelize
    .sync()
-   .then((result) => {
-      console.log('create success');
+   .then(async (result) => {
+      const roles = await db.Roles.findAll();
+      // default roles and user
+      if (roles.length === 0) {
+         const newRoles = [{ role_name: 'ADMIN' }, { role_name: 'USER' }];
+         await db.Roles.bulkCreate(newRoles);
+
+         await db.Users.findOrCreate({
+            where: { user_name: '@congtuan' },
+            defaults: {
+               user_name: '@congtuan',
+               email: 'tuancnttk61@gmail.com',
+               full_name: 'Le Cong Tuan',
+               gender: 'male',
+               pwd: hashingPassword('dinhmenh123'),
+               role_id: 1,
+            },
+         });
+      }
+      console.log('create db is success');
    })
    .catch((err) => {
       console.log(err);

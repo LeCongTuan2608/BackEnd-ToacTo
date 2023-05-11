@@ -38,7 +38,6 @@ module.exports = (sequelize, DataTypes) => {
          },
          birth_day: {
             type: DataTypes.DATE,
-            allowNull: false,
          },
          gender: {
             type: DataTypes.STRING,
@@ -68,11 +67,6 @@ module.exports = (sequelize, DataTypes) => {
          role_id: {
             type: DataTypes.INTEGER,
             defaultValue: 2,
-            //test
-            references: {
-               model: 'Roles',
-               key: 'role_id',
-            },
          },
       },
       {

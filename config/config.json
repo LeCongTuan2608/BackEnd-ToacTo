@@ -1,25 +1,25 @@
 {
    "development": {
-      "username": "root",
-      "password": "Tuan12345678",
-      "database": "toacto2",
-      "host": "127.0.0.1",
+      "username": "freedb_congtuan",
+      "password": "bK4q!XZmMp?7#Jx",
+      "database": "freedb_toacto",
+      "host": "sql.freedb.tech",
       "dialect": "mysql",
       "logging": false,
       "timezone": "+07:00"
    },
    "test": {
-      "username": "root",
-      "password": null,
-      "database": "database_test",
-      "host": "127.0.0.1",
+      "username": "freedb_congtuan",
+      "password": "bK4q!XZmMp?7#Jx",
+      "database": "freedb_toacto",
+      "host": "sql.freedb.tech",
       "dialect": "mysql"
    },
    "production": {
-      "username": "root",
-      "password": null,
-      "database": "database_production",
-      "host": "127.0.0.1",
+      "username": "freedb_congtuan",
+      "password": "bK4q!XZmMp?7#Jx",
+      "database": "freedb_toacto",
+      "host": "sql.freedb.tech",
       "dialect": "mysql"
    }
 }
