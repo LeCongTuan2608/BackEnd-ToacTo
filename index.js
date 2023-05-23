@@ -4,6 +4,7 @@ const connectDB = require('./database/db');
 const db = require('./models/index');
 const bcrypt = require('bcryptjs');
 const saltRounds = 10;
+const cors = require('cors');
 // parse json
 const bodyParser = require('body-parser');
 const multer = require('multer');
@@ -14,13 +15,12 @@ const refreshTokenRouter = require('./routes/refreshTokenRouter');
 const userRouter = require('./routes/userRouter');
 const postRouter = require('./routes/postsRouter');
 const { sequelize } = require('./models');
-
 const hashingPassword = (password) => {
    return bcrypt.hashSync(password, saltRounds);
 };
 const app = express();
 const PORT = process.env.PORT || 5000;
-
+app.use(cors());
 app.use(morgan('combined'));
 
 // dùng để parse json req body

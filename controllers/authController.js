@@ -65,7 +65,7 @@ module.exports.registerHandler = async (req, res, next) => {
          return errorController.errorHandler(res, 'UserName or email already exists!', 400);
 
       res.status(201).json({
-         message: 'Register in successfully',
+         mes: 'Register in successfully',
       });
    } catch (error) {
       console.log('error', error);
@@ -103,7 +103,7 @@ module.exports.loginHandler = async (req, res, next) => {
       //2. if user exists, check password
       const isPasswordValid = comparePassword(data.pwd, existingUser.pwd);
       if (!isPasswordValid)
-         return errorController.errorHandler(res, 'Wrong username or password', 404);
+         return errorController.errorHandler(res, 'Wrong email or password', 404);
 
       //3. find refresh token
       const removeToken = await db.refresh_token.findOne({
@@ -131,7 +131,7 @@ module.exports.loginHandler = async (req, res, next) => {
          refreshToken,
       });
 
-      res.status(200).json({ ...existingUser.dataValues, token, refreshToken });
+      res.status(200).json({ ...existingUser.dataValues, token, refreshToken, type: 'Bearer' });
    } catch (error) {
       console.log('error', error);
       errorController.serverErrorHandle(error, res);
