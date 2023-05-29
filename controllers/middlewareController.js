@@ -21,4 +21,5 @@ const authenToken = (req, res, next) => {
       errorController.serverErrorHandle(error, res);
    }
 };
+
 module.exports = authenToken;

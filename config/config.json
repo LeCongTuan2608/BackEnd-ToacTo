@@ -1,9 +1,9 @@
 {
    "development": {
-      "username": "freedb_congtuan",
-      "password": "bK4q!XZmMp?7#Jx",
-      "database": "freedb_toacto",
-      "host": "sql.freedb.tech",
+      "username": "root",
+      "password": "Tuan12345678",
+      "database": "toacto2",
+      "host": "localhost",
       "dialect": "mysql",
       "logging": false,
       "timezone": "+07:00"

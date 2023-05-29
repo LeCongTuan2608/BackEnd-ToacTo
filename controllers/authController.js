@@ -1,19 +1,19 @@
 const db = require('../models/index');
 const bcrypt = require('bcryptjs');
-const saltRounds = 10;
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 const errorController = require('./errorController');
 const { Op } = require('sequelize');
 dotenv.config();
 
+const saltRounds = parseInt(process.env.SALT_ROUNDS);
 const hashingPassword = (password) => {
    return bcrypt.hashSync(password, saltRounds);
 };
 const comparePassword = (password, hash) => {
    return bcrypt.compareSync(password, hash);
 };
-//
+
 const generateToken = (data) => {
    const options = {
       expiresIn: '7d',
