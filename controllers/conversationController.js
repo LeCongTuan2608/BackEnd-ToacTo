@@ -29,6 +29,22 @@ module.exports.getConversation = async (req, res, next) => {
       errorController.serverErrorHandle(error, res);
    }
 };
+module.exports.getConversationByUserName = async (req, res, next) => {
+   try {
+      const conversation = await db.Conversation.findOne({
+         where: {
+            [Op.or]: [
+               { [Op.and]: [{ user_1: req.user.user_name }, { user_2: req.params.userName }] },
+               { [Op.and]: [{ user_1: req.params.userName }, { user_2: req.user.user_name }] },
+            ],
+         },
+      });
+      next(res.status(200).json({ conversation }));
+   } catch (error) {
+      console.log('error:', error);
+      errorController.serverErrorHandle(error, res);
+   }
+};
 module.exports.checkedConversation = async (req, res, next) => {
    try {
       await db.Conversation.update(

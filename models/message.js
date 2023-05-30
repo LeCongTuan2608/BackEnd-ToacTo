@@ -11,6 +11,8 @@ module.exports = (sequelize, DataTypes) => {
          // define association here
          models.Conversation.hasMany(Message, { as: 'message', foreignKey: 'conversation_id' });
          //  Message.belongsTo(models.Conversation, { foreignKey: 'conversation_id' });
+         Message.belongsTo(models.Users, { foreignKey: 'sender' });
+         Message.belongsTo(models.Users, { foreignKey: 'receiver' });
       }
    }
    Message.init(

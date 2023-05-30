@@ -300,14 +300,19 @@ module.exports.unFollowHandler = async (req, res, next) => {
 // // get suggest user
 module.exports.getSuggestHandler = async (req, res, next) => {
    try {
-      const user = await db.Users.findAll({
+      const results = await db.Users.findAll({
+         where: {
+            user_name: {
+               [Op.notLike]: `%${req.user.user_name}%`,
+            },
+         },
          attributes: ['user_name', 'full_name', 'gender', 'relationship', 'about', 'avatar'],
          order: Sequelize.literal('rand()'),
-         limit: 10,
+         limit: 5,
       });
       next(
          res.status(200).json({
-            user,
+            results,
          }),
       );
    } catch (error) {

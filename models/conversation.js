@@ -11,6 +11,7 @@ module.exports = (sequelize, DataTypes) => {
          // define association here
          Conversation.belongsTo(models.Users, { foreignKey: 'user_1', as: 'user_1_info' });
          Conversation.belongsTo(models.Users, { foreignKey: 'user_2', as: 'user_2_info' });
+         Conversation.belongsTo(models.Users, { foreignKey: 'sender' });
       }
    }
    Conversation.init(
