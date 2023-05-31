@@ -7,7 +7,7 @@ const router = express.Router();
 
 router
    .route('/checked/:conversationId')
-   .post([authenToken], conversationController.checkedConversation);
+   .get([authenToken], conversationController.checkedConversation);
 router
    .route('/by-user-name/:userName')
    .get([authenToken], conversationController.getConversationByUserName);
