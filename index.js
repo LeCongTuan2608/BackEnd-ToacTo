@@ -112,7 +112,9 @@ io.on('connection', (socket) => {
    });
    socket.on('sendMessage', async (message) => {
       io.emit('getMessage', message);
-      console.log('message:', message);
+   });
+   socket.on('sendIdRemoveMes', async (mesId) => {
+      io.emit('getIdRemoveMes', mesId);
    });
 
    // Lắng nghe sự kiện disconnect từ client

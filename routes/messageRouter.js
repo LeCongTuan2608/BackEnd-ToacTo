@@ -6,6 +6,7 @@ const authenToken = require('../controllers/middlewareController');
 const router = express.Router();
 
 router.route('/:conversationId').get([authenToken], messageController.getMessages);
+router.route('/:mesId').patch([authenToken], messageController.removeMessages);
 router.route('/').post([authenToken], messageController.createMessages);
 
 // router.route('/').post([authenToken], messageController.loginHandler);

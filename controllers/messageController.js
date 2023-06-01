@@ -8,10 +8,10 @@ module.exports.getMessages = async (req, res, next) => {
       if (req.params.conversationId) {
          messages = await db.Message.findAll({
             where: {
-               conversation_id: req?.params?.conversationId,
+               conversation_id: req.params?.conversationId,
             },
             limit: 15,
-            order: [['updatedAt', 'DESC']],
+            order: [['createdAt', 'DESC']],
          });
       }
       next(res.status(200).json({ messages: messages ? messages.reverse() : [] }));
@@ -22,39 +22,64 @@ module.exports.getMessages = async (req, res, next) => {
 };
 module.exports.createMessages = async (req, res, next) => {
    try {
-      const { sender, content, receiver, conversation_id } = req.body;
-      console.log('req.body:', req.body);
-
-      let conversation;
-      if (!conversation_id) {
-         conversation = await db.Conversation.create({
-            user_1: sender,
-            user_2: receiver,
-            sender: sender,
-            last_message: content,
-         });
+      const { receiver, content, id } = req.body;
+      let whereCondition = {};
+      let last_message = {
+         sender: req.user.user_name,
+         content: content || null,
+      };
+      if (id) {
+         whereCondition = { id };
+         await db.Conversation.update({ last_message }, { where: whereCondition });
       } else {
-         conversation = await db.Conversation.findOne({
+         whereCondition = {
+            member: {
+               [Op.and]: [{ [Op.substring]: req.user.user_name }, { [Op.substring]: receiver }],
+            },
+         };
+      }
+      const [result, created] = await db.Conversation.findOrCreate({
+         where: whereCondition,
+         defaults: {
+            member: [req.user.user_name, receiver],
+            last_message,
+            checked: [receiver],
+         },
+      });
+      if (created) {
+         const users = await db.Users.findAll({
             where: {
-               conversation_id,
+               user_name: result.member,
             },
          });
-         await db.Conversation.update(
-            { last_message: content, sender: sender, checked: false },
-            {
-               where: {
-                  conversation_id,
-               },
-            },
-         );
+         await result.addUsers(users);
       }
+
+      // create message
       const message = await db.Message.create({
-         sender: sender,
+         sender: req.user.user_name,
          content: content,
-         receiver: receiver,
-         conversation_id: conversation.conversation_id,
+         conversation_id: result.id,
       });
-      next(res.status(201).json({ message }));
+      next(res.status(201).json({ result, message }));
+   } catch (error) {
+      console.log('error:', error);
+      errorController.serverErrorHandle(error, res);
+   }
+};
+module.exports.removeMessages = async (req, res, next) => {
+   try {
+      if (!req.params.mesId)
+         return next(errorController.errorHandler(res, 'id message cannot be left blank', 404));
+      message = await db.Message.findByPk(req.params.mesId);
+      if (message.sender === req.user.user_name) {
+         message.member_remove_message = ['all'];
+         await message.save();
+      }
+      if (message.sender !== req.user.user_name) {
+         message.member_remove_message = [...message.member_remove_message, req.user.user_name];
+      }
+      next(res.status(200).json({ message }));
    } catch (error) {
       console.log('error:', error);
       errorController.serverErrorHandle(error, res);

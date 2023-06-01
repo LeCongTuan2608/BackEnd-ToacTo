@@ -11,6 +11,8 @@ router
 router
    .route('/by-user-name/:userName')
    .get([authenToken], conversationController.getConversationByUserName);
+router.route('/:conversationId').delete([authenToken], conversationController.removeConversation);
+router.route('/').post([authenToken], conversationController.createConversation);
 router.route('/').get([authenToken], conversationController.getConversation);
 // router.route('/').post([authenToken], conversationController.loginHandler);
 

@@ -12,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
          models.Conversation.hasMany(Message, { as: 'message', foreignKey: 'conversation_id' });
          //  Message.belongsTo(models.Conversation, { foreignKey: 'conversation_id' });
          Message.belongsTo(models.Users, { foreignKey: 'sender' });
-         Message.belongsTo(models.Users, { foreignKey: 'receiver' });
+         // Message.belongsTo(models.Users, { foreignKey: 'receiver' });
       }
    }
    Message.init(
@@ -24,17 +24,22 @@ module.exports = (sequelize, DataTypes) => {
                not: ['^[a-z]+$', 'i'],
             },
          },
+         // receiver: {
+         //    type: DataTypes.ARRAY(DataTypes.STRING),
+         //    allowNull: false,
+         // },
          content: {
             type: DataTypes.STRING,
             allowNull: false,
          },
-         receiver: {
-            type: DataTypes.STRING,
-            allowNull: false,
-            validate: {
-               not: ['^[a-z]+$', 'i'],
-            },
+         member_remove_message: {
+            type: DataTypes.JSON,
+            allowNull: true,
          },
+         // status_remove_receiver: {
+         //    type: DataTypes.BOOLEAN,
+         //    defaultValue: false,
+         // },
          conversation_id: {
             type: DataTypes.INTEGER,
             allowNull: false,
