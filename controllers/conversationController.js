@@ -72,12 +72,17 @@ module.exports.getConversationByUserName = async (req, res, next) => {
    try {
       const conversation = await db.Conversation.findOne({
          where: {
-            member: {
-               [Op.and]: [
-                  { [Op.substring]: req.user.user_name },
-                  { [Op.substring]: req.params.userName },
-               ],
-            },
+            [Op.and]: [
+               {
+                  member: {
+                     [Op.and]: [
+                        { [Op.substring]: req.user.user_name },
+                        { [Op.substring]: req.params.userName },
+                     ],
+                  },
+               },
+               { group: false },
+            ],
          },
          include: [
             {
@@ -105,7 +110,8 @@ module.exports.checkedConversation = async (req, res, next) => {
             ],
          },
       });
-      if (result.checked !== null) result.checked = [...result.checked, req.user.user_name];
+      if (result.checked !== null && !result.checked.includes(req.user.user_name))
+         result.checked = [...result.checked, req.user.user_name];
       else result.checked = [req.user.user_name];
       await result.save();
       next(res.status(200).json({ result }));
@@ -131,7 +137,7 @@ module.exports.removeConversation = async (req, res, next) => {
       await db.Message.update(
          {
             member_remove_message: db.sequelize.literal(
-               `COALESCE(member_remove_message, '[]') || '[${req.user.user_name}]'`,
+               `JSON_ARRAY_APPEND(COALESCE(member_remove_message, '[]'), '$', '${req.user.user_name}')`,
             ),
          },
          { where: { conversation_id: req.params.conversationId } },

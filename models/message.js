@@ -35,6 +35,7 @@ module.exports = (sequelize, DataTypes) => {
          member_remove_message: {
             type: DataTypes.JSON,
             allowNull: true,
+            defaultValue: null,
          },
          // status_remove_receiver: {
          //    type: DataTypes.BOOLEAN,

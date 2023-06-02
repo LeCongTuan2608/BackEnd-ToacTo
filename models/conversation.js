@@ -30,6 +30,7 @@ module.exports = (sequelize, DataTypes) => {
          member_remove_chat: {
             type: DataTypes.JSON,
             allowNull: true,
+            defaultValue: null,
          },
 
          // user_1: {
@@ -57,10 +58,12 @@ module.exports = (sequelize, DataTypes) => {
 
          last_message: {
             type: DataTypes.JSON,
+            defaultValue: null,
          },
          checked: {
             type: DataTypes.JSON,
             allowNull: true,
+            defaultValue: null,
          },
          avatar: {
             type: DataTypes.STRING,

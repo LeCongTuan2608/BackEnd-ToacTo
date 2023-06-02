@@ -8,7 +8,21 @@ module.exports.getMessages = async (req, res, next) => {
       if (req.params.conversationId) {
          messages = await db.Message.findAll({
             where: {
-               conversation_id: req.params?.conversationId,
+               [Op.and]: [
+                  {
+                     conversation_id: req.params?.conversationId,
+                  },
+                  {
+                     [Op.or]: [
+                        { member_remove_message: null },
+                        {
+                           member_remove_message: {
+                              [Op.notLike]: [`%${req.user.user_name}%`],
+                           },
+                        },
+                     ],
+                  },
+               ],
             },
             limit: 15,
             order: [['createdAt', 'DESC']],
@@ -43,7 +57,7 @@ module.exports.createMessages = async (req, res, next) => {
          defaults: {
             member: [req.user.user_name, receiver],
             last_message,
-            checked: [receiver],
+            checked: [req.user.user_name],
          },
       });
       if (created) {
@@ -61,7 +75,18 @@ module.exports.createMessages = async (req, res, next) => {
          content: content,
          conversation_id: result.id,
       });
-      next(res.status(201).json({ result, message }));
+      // kiểm tra nếu không tạo thì cập nhật lại checked
+      if (!created) {
+         await db.Conversation.update(
+            {
+               checked: [req.user.user_name],
+               member_remove_chat: null,
+            },
+            { where: { id: result.id } },
+         );
+      }
+
+      next(res.status(201).json({ result, message, created }));
    } catch (error) {
       console.log('error:', error);
       errorController.serverErrorHandle(error, res);
@@ -71,13 +96,18 @@ module.exports.removeMessages = async (req, res, next) => {
    try {
       if (!req.params.mesId)
          return next(errorController.errorHandler(res, 'id message cannot be left blank', 404));
-      message = await db.Message.findByPk(req.params.mesId);
+
+      let message = await db.Message.findByPk(req.params.mesId);
       if (message.sender === req.user.user_name) {
          message.member_remove_message = ['all'];
          await message.save();
       }
       if (message.sender !== req.user.user_name) {
-         message.member_remove_message = [...message.member_remove_message, req.user.user_name];
+         if (message.member_remove_message === null)
+            message.member_remove_message = [req.user.user_name];
+         else
+            message.member_remove_message = [...message?.member_remove_message, req.user.user_name];
+         await message.save();
       }
       next(res.status(200).json({ message }));
    } catch (error) {
