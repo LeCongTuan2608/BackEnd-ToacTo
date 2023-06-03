@@ -44,7 +44,6 @@ module.exports.createMessages = async (req, res, next) => {
       };
       if (id) {
          whereCondition = { id };
-         await db.Conversation.update({ last_message }, { where: whereCondition });
       } else {
          whereCondition = {
             member: {
@@ -55,11 +54,18 @@ module.exports.createMessages = async (req, res, next) => {
       const [result, created] = await db.Conversation.findOrCreate({
          where: whereCondition,
          defaults: {
-            member: [req.user.user_name, receiver],
+            member: [req.user.user_name, ...receiver],
             last_message,
             checked: [req.user.user_name],
          },
       });
+      // create message
+      const message = await db.Message.create({
+         sender: req.user.user_name,
+         content: content,
+         conversation_id: result.id,
+      });
+      // add User
       if (created) {
          const users = await db.Users.findAll({
             where: {
@@ -68,23 +74,14 @@ module.exports.createMessages = async (req, res, next) => {
          });
          await result.addUsers(users);
       }
-
-      // create message
-      const message = await db.Message.create({
-         sender: req.user.user_name,
-         content: content,
-         conversation_id: result.id,
-      });
-      // kiểm tra nếu không tạo thì cập nhật lại checked
-      if (!created) {
-         await db.Conversation.update(
-            {
-               checked: [req.user.user_name],
-               member_remove_chat: null,
-            },
-            { where: { id: result.id } },
-         );
-      }
+      await db.Conversation.update(
+         {
+            last_message: { ...last_message, id: message.id },
+            checked: [req.user.user_name],
+            member_remove_chat: null,
+         },
+         { where: whereCondition },
+      );
 
       next(res.status(201).json({ result, message, created }));
    } catch (error) {
@@ -108,6 +105,13 @@ module.exports.removeMessages = async (req, res, next) => {
          else
             message.member_remove_message = [...message?.member_remove_message, req.user.user_name];
          await message.save();
+      }
+      // Kiểm tra nếu message.id trùng với last_message.id
+      const conversation = await db.Conversation.findByPk(message.conversation_id);
+      if (conversation.last_message && conversation.last_message.id === message.id) {
+         conversation.last_message = { ...conversation.last_message, isRemove: true };
+         conversation.checked = [...conversation.member];
+         await conversation.save();
       }
       next(res.status(200).json({ message }));
    } catch (error) {

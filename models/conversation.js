@@ -32,32 +32,9 @@ module.exports = (sequelize, DataTypes) => {
             allowNull: true,
             defaultValue: null,
          },
-
-         // user_1: {
-         //    type: DataTypes.STRING,
-         //    allowNull: false,
-         //    validate: {
-         //       not: ['^[a-z]+$', 'i'],
-         //    },
-         //    references: {
-         //       model: 'Users', // Tên bảng liên kết
-         //       key: 'user_name', // Tên cột khóa chính trong bảng liên kết
-         //    },
-         // },
-         // user_2: {
-         //    type: DataTypes.STRING,
-         //    allowNull: false,
-         //    validate: {
-         //       not: ['^[a-z]+$', 'i'],
-         //    },
-         //    references: {
-         //       model: 'Users', // Tên bảng liên kết
-         //       key: 'user_name', // Tên cột khóa chính trong bảng liên kết
-         //    },
-         // },
-
          last_message: {
             type: DataTypes.JSON,
+            allowNull: true,
             defaultValue: null,
          },
          checked: {

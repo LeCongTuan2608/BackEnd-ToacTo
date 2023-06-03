@@ -10,9 +10,7 @@ module.exports = (sequelize, DataTypes) => {
       static associate(models) {
          // define association here
          models.Conversation.hasMany(Message, { as: 'message', foreignKey: 'conversation_id' });
-         //  Message.belongsTo(models.Conversation, { foreignKey: 'conversation_id' });
          Message.belongsTo(models.Users, { foreignKey: 'sender' });
-         // Message.belongsTo(models.Users, { foreignKey: 'receiver' });
       }
    }
    Message.init(
@@ -24,10 +22,6 @@ module.exports = (sequelize, DataTypes) => {
                not: ['^[a-z]+$', 'i'],
             },
          },
-         // receiver: {
-         //    type: DataTypes.ARRAY(DataTypes.STRING),
-         //    allowNull: false,
-         // },
          content: {
             type: DataTypes.STRING,
             allowNull: false,
@@ -37,10 +31,6 @@ module.exports = (sequelize, DataTypes) => {
             allowNull: true,
             defaultValue: null,
          },
-         // status_remove_receiver: {
-         //    type: DataTypes.BOOLEAN,
-         //    defaultValue: false,
-         // },
          conversation_id: {
             type: DataTypes.INTEGER,
             allowNull: false,

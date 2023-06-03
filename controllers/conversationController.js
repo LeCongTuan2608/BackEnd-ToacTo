@@ -61,6 +61,7 @@ module.exports.getConversation = async (req, res, next) => {
             },
          ],
          limit: 10,
+         order: [['updatedAt', 'DESC']],
       });
       next(res.status(200).json({ conversation }));
    } catch (error) {
