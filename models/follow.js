@@ -1,7 +1,7 @@
 'use strict';
 const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-   class Following extends Model {
+   class Follow extends Model {
       /**
        * Helper method for defining associations.
        * This method is not a part of Sequelize lifecycle.
@@ -9,15 +9,22 @@ module.exports = (sequelize, DataTypes) => {
        */
       static associate(models) {
          // define association here
-         models.Users.hasMany(Following, { foreignKey: 'user_name' });
-         Following.belongsTo(models.Users, { foreignKey: 'user_following' });
+         //  models.Users.hasMany(Follow, { foreignKey: 'user_name' });
+         //  Follow.belongsTo(models.Users, { foreignKey: 'user_follow' });
          //
-         // Following.belongsToMany(models.Followers, { through: 'Follow' });
+         Follow.belongsTo(models.Users, {
+            foreignKey: 'user_follow',
+            targetKey: 'user_name',
+         });
+         Follow.belongsTo(models.Users, {
+            foreignKey: 'user_name',
+            targetKey: 'user_name',
+         });
       }
    }
-   Following.init(
+   Follow.init(
       {
-         user_following: {
+         user_follow: {
             type: DataTypes.STRING,
             allowNull: false,
             validate: {
@@ -25,6 +32,7 @@ module.exports = (sequelize, DataTypes) => {
             },
          },
          user_name: {
+            allowNull: false,
             type: DataTypes.STRING,
             validate: {
                not: ['^[a-z]+$', 'i'],
@@ -33,9 +41,9 @@ module.exports = (sequelize, DataTypes) => {
       },
       {
          sequelize,
-         modelName: 'Following',
+         modelName: 'Follow',
          timestamps: true,
       },
    );
-   return Following;
+   return Follow;
 };

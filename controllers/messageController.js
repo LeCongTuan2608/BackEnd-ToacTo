@@ -82,8 +82,18 @@ module.exports.createMessages = async (req, res, next) => {
          },
          { where: whereCondition },
       );
-
-      next(res.status(201).json({ result, message, created }));
+      const conversation = await db.Conversation.findByPk(result.id, {
+         include: [
+            {
+               model: db.Users,
+               attributes: ['user_name', 'full_name', 'avatar'],
+               through: {
+                  attributes: [],
+               },
+            },
+         ],
+      });
+      next(res.status(201).json({ conversation, message }));
    } catch (error) {
       console.log('error:', error);
       errorController.serverErrorHandle(error, res);

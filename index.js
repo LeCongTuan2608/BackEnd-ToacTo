@@ -110,6 +110,9 @@ io.on('connection', (socket) => {
    socket.on('setup', async (user) => {
       console.log(`A user connected ${user}`);
    });
+   socket.on('sendConversation', async (conver) => {
+      io.emit('getConversation', conver);
+   });
    socket.on('sendMessage', async (message) => {
       io.emit('getMessage', message);
    });

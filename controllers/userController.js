@@ -130,43 +130,29 @@ module.exports.getPostHandler = (req, res, next) => {
 //follow user other
 module.exports.followHandler = async (req, res, next) => {
    try {
-      if (!req.body.user_follow)
-         return next(
-            errorController.errorHandler(res, 'field user_follow cannot be left blank!', 404),
-         );
-      //1, check user exists
-      const user = await db.Users.findOne({ where: { user_name: req.body.user_follow } });
-      if (!user) return errorController.errorHandler(res, 'This user not exists!', 400);
-
-      //2. find in tb following, if not exists new create, else return
-      const [following, createdFollowing] = await db.Following.findOrCreate({
+      const [result, created] = await db.Follow.findOrCreate({
          where: {
-            [Op.and]: [{ user_following: req.body.user_follow }, { user_name: req.user.user_name }],
+            [Op.and]: [{ user_follow: req.params.user_follow }, { user_name: req.user.user_name }],
          },
          defaults: {
-            user_following: req.body.user_follow,
+            user_follow: req.params.user_follow,
             user_name: req.user.user_name,
          },
       });
-      if (!createdFollowing)
-         return errorController.errorHandler(res, 'Already following this user!', 400);
-
-      // //2. find in tb Followers, if not exists new create, else return
-      const [followers, createdFollowers] = await db.Followers.findOrCreate({
-         where: {
-            [Op.and]: [{ user_name: req.body.user_follow }, { user_followers: req.user.user_name }],
-         },
-         defaults: {
-            user_name: req.body.user_follow,
-            user_followers: req.user.user_name,
-         },
-      });
-      if (!createdFollowers)
-         return errorController.errorHandler(res, 'Already followers this user!', 400);
-
+      if (!created) {
+         await db.Follow.destroy({
+            where: {
+               [Op.and]: [
+                  { user_follow: req.params.user_follow },
+                  { user_name: req.user.user_name },
+               ],
+            },
+            focus: true,
+         });
+      }
       next(
          res.status(201).json({
-            message: 'Follow is success.',
+            message: 'Follow/unFollow is success.',
          }),
       );
    } catch (error) {
@@ -178,20 +164,16 @@ module.exports.followHandler = async (req, res, next) => {
 //get following
 module.exports.getFollowingHandler = async (req, res, next) => {
    try {
-      if (!req.params.user_name)
-         return next(
-            errorController.errorHandler(res, 'params user_name cannot be left blank', 404),
-         );
-      const userFollowing = await db.Following.findAll({
-         where: { user_name: req.params.user_name },
-         attributes: ['id'],
-         include: [
-            {
-               model: db.Users,
-               attributes: ['user_name', 'full_name', 'relationship', 'avatar', 'about'],
-            },
-         ],
-      });
+      const query = `SELECT a.id, b.user_name, b.full_name, b.avatar FROM follows a INNER JOIN users b 
+      ON a.user_name = '${req.user.user_name}' and a.user_follow = b.user_name
+      LIMIT ${req.query.limit || 10} OFFSET ${req.query.offset || 0}`;
+
+      const results = await db.sequelize.query(query, { type: Sequelize.QueryTypes.SELECT });
+      next(
+         res.status(200).json({
+            results,
+         }),
+      );
       next(
          res.status(200).json({
             length: userFollowing?.length,
@@ -207,24 +189,14 @@ module.exports.getFollowingHandler = async (req, res, next) => {
 // get followers
 module.exports.getFollowersHandler = async (req, res, next) => {
    try {
-      if (!req.params.user_name)
-         return next(
-            errorController.errorHandler(res, 'params user_name cannot be left blank', 404),
-         );
-      const userFollowing = await db.Followers.findAll({
-         where: { user_name: req.params.user_name },
-         attributes: ['id'],
-         include: [
-            {
-               model: db.Users,
-               attributes: ['user_name', 'full_name', 'relationship', 'avatar', 'about'],
-            },
-         ],
-      });
+      const query = `SELECT a.id, b.user_name, b.full_name, b.avatar FROM follows a INNER JOIN users b 
+      ON a.user_follow = '${req.user.user_name}' and a.user_name = b.user_name
+      LIMIT ${req.query.limit || 10} OFFSET ${req.query.offset || 0}`;
+
+      const results = await db.sequelize.query(query, { type: Sequelize.QueryTypes.SELECT });
       next(
          res.status(200).json({
-            length: userFollowing?.length,
-            data: userFollowing,
+            results,
          }),
       );
    } catch (error) {
@@ -300,16 +272,12 @@ module.exports.unFollowHandler = async (req, res, next) => {
 // // get suggest user
 module.exports.getSuggestHandler = async (req, res, next) => {
    try {
-      const results = await db.Users.findAll({
-         where: {
-            user_name: {
-               [Op.notLike]: `%${req.user.user_name}%`,
-            },
-         },
-         attributes: ['user_name', 'full_name', 'gender', 'relationship', 'about', 'avatar'],
-         order: Sequelize.literal('rand()'),
-         limit: 5,
-      });
+      const query = `SELECT u.user_name, u.full_name, u.avatar FROM users u
+      LEFT JOIN follows f ON u.user_name = f.user_follow AND f.user_name = '${req.user.user_name}' 
+      WHERE f.user_follow  IS NULL and u.user_name != '${req.user.user_name}'
+      LIMIT ${req.query.limit || 10} OFFSET ${req.query.offset || 0}`;
+
+      const results = await db.sequelize.query(query, { type: Sequelize.QueryTypes.SELECT });
       next(
          res.status(200).json({
             results,
@@ -322,14 +290,27 @@ module.exports.getSuggestHandler = async (req, res, next) => {
 };
 
 // get friend when both users follow each other
-// module.exports.getFriendsHandler = (req, res, next) => {
-//    try {
-//       next();
-//    } catch (error) {
-//       console.log('error', error);
-//       errorController.serverErrorHandle(error, res);
-//    }
-// };
+module.exports.getFriendsHandler = async (req, res, next) => {
+   try {
+      const query = `SELECT a.id, c.user_name, c.full_name, c.avatar 
+      FROM follows a INNER JOIN follows b 
+      ON a.user_name = b.user_follow and b.user_name = a.user_follow and b.user_name = '${
+         req.user.user_name
+      }' 
+      JOIN users c ON a.user_name = c.user_name
+      LIMIT ${req.query.limit || 10} OFFSET ${req.query.offset || 0}`;
+
+      const results = await db.sequelize.query(query, { type: Sequelize.QueryTypes.SELECT });
+      next(
+         res.status(200).json({
+            results,
+         }),
+      );
+   } catch (error) {
+      console.log('error', error);
+      errorController.serverErrorHandle(error, res);
+   }
+};
 
 //get all user
 module.exports.getAllUserHandler = async (req, res, next) => {
