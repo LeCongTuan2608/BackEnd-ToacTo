@@ -169,17 +169,7 @@ module.exports.getFollowingHandler = async (req, res, next) => {
       LIMIT ${req.query.limit || 10} OFFSET ${req.query.offset || 0}`;
 
       const results = await db.sequelize.query(query, { type: Sequelize.QueryTypes.SELECT });
-      next(
-         res.status(200).json({
-            results,
-         }),
-      );
-      next(
-         res.status(200).json({
-            length: userFollowing?.length,
-            data: userFollowing,
-         }),
-      );
+      next(res.status(200).json({ results }));
    } catch (error) {
       console.log('error', error);
       errorController.serverErrorHandle(error, res);
@@ -272,17 +262,17 @@ module.exports.unFollowHandler = async (req, res, next) => {
 // // get suggest user
 module.exports.getSuggestHandler = async (req, res, next) => {
    try {
-      const query = `SELECT u.user_name, u.full_name, u.avatar FROM users u
-      LEFT JOIN follows f ON u.user_name = f.user_follow AND f.user_name = '${req.user.user_name}' 
-      WHERE f.user_follow  IS NULL and u.user_name != '${req.user.user_name}'
+      const query = `
+      SELECT u.user_name, u.full_name, u.avatar, 
+            (SELECT COUNT(*) FROM follows WHERE user_follow = u.user_name) AS follower
+      FROM users u
+      LEFT JOIN follows f ON u.user_name = f.user_follow AND f.user_name = '${req.user.user_name}'
+      WHERE f.user_follow IS NULL AND u.user_name <> '${req.user.user_name}'
+      ORDER BY follower DESC
       LIMIT ${req.query.limit || 10} OFFSET ${req.query.offset || 0}`;
 
       const results = await db.sequelize.query(query, { type: Sequelize.QueryTypes.SELECT });
-      next(
-         res.status(200).json({
-            results,
-         }),
-      );
+      next(res.status(200).json({ results }));
    } catch (error) {
       console.log('error', error);
       errorController.serverErrorHandle(error, res);
@@ -301,11 +291,7 @@ module.exports.getFriendsHandler = async (req, res, next) => {
       LIMIT ${req.query.limit || 10} OFFSET ${req.query.offset || 0}`;
 
       const results = await db.sequelize.query(query, { type: Sequelize.QueryTypes.SELECT });
-      next(
-         res.status(200).json({
-            results,
-         }),
-      );
+      next(res.status(200).json({ results }));
    } catch (error) {
       console.log('error', error);
       errorController.serverErrorHandle(error, res);

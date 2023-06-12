@@ -64,6 +64,11 @@ module.exports = (sequelize, DataTypes) => {
                not: ['^[a-z]+$', 'i'],
             },
          },
+         // ban: {
+         //    type: DataTypes.BOOLEAN,
+         //    allowNull: true,
+         //    defaultValue: false,
+         // },
          role_id: {
             type: DataTypes.INTEGER,
             defaultValue: 2,

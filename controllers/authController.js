@@ -14,16 +14,10 @@ const comparePassword = (password, hash) => {
    return bcrypt.compareSync(password, hash);
 };
 
-const generateToken = (data) => {
-   const options = {
-      expiresIn: '7d',
-   };
+const generateToken = (data, options) => {
    return jwt.sign(data, process.env.ACCESS_TOKEN_SECRET, options);
 };
-const generateRefreshToken = (data) => {
-   const options = {
-      expiresIn: '30d',
-   };
+const generateRefreshToken = (data, options) => {
    return jwt.sign(data, process.env.REFRESH_TOKEN_SECRET, options);
 };
 // 1 register user
@@ -121,17 +115,38 @@ module.exports.loginHandler = async (req, res, next) => {
       // xoa pwd khoi data tre ve
       delete existingUser.dataValues['pwd'];
 
+      const dateToken = 7;
+      const dateRefreshToken = 30;
       // tao token
-      const token = generateToken({ ...existingUser.dataValues });
-      const refreshToken = generateRefreshToken({ ...existingUser.dataValues });
+      const token = generateToken({ ...existingUser.dataValues }, { expiresIn: `${dateToken}d` });
+      const refreshToken = generateRefreshToken(
+         { ...existingUser.dataValues },
+         { expiresIn: `${dateRefreshToken}d` },
+      );
+      //
+      const currentDate = new Date(); // Lấy ngày hiện tại
+
+      // Tạo ngày hết hạn của token
+      const tokenExpires = new Date(currentDate);
+      tokenExpires.setDate(tokenExpires.getDate() + dateToken); // Cộng thêm 7 ngày
+
+      // Tạo ngày hết hạn của refreshToken
+      const refreshTokenExpires = new Date(currentDate);
+      refreshTokenExpires.setDate(refreshTokenExpires.getDate() + dateRefreshToken); //
 
       // luu refresh token vao database
       await db.refresh_token.create({
          user_name: existingUser.user_name,
          refreshToken,
       });
-
-      res.status(200).json({ ...existingUser.dataValues, token, refreshToken, type: 'Bearer' });
+      res.status(200).json({
+         ...existingUser.dataValues,
+         token,
+         refreshToken,
+         type: 'Bearer',
+         tokenExpires,
+         refreshTokenExpires,
+      });
    } catch (error) {
       console.log('error', error);
       errorController.serverErrorHandle(error, res);
@@ -231,7 +246,13 @@ module.exports.changePasswordHandler = async (req, res, next) => {
 // // 6 get user
 module.exports.getUserHandler = async (req, res, next) => {
    try {
-      next(res.status(200).json(req.user));
+      const result = await db.Users.findOne({
+         where: {
+            user_name: req.user.user_name,
+         },
+         attributes: { exclude: ['pwd'] },
+      });
+      next(res.status(200).json({ result }));
    } catch (error) {
       console.log('error', error);
       errorController.serverErrorHandle(error, res);

@@ -85,10 +85,11 @@ module.exports.getAllPostsHandler = async (req, res, next) => {
 // new posts
 module.exports.newPostsHandler = async (req, res, next) => {
    try {
-      const formData = {
+      let formData = {
          ...req.body,
          ...req.files,
       };
+      console.log('formData:', formData);
       // check user
       if (req.body.userPost !== req.user.user_name) {
          req.files && removeFile(req.files);
@@ -101,7 +102,7 @@ module.exports.newPostsHandler = async (req, res, next) => {
          content: formData?.content,
          user_posts: req.user.user_name,
       });
-      if (req.files) {
+      if (req.files.images || req.files.videos) {
          if (formData.images && formData.images.length !== 0) {
             const listImages = formData.images.map((image) => {
                return { url: image.path, filename: image.filename, posts_id: newPosts.posts_id };
@@ -115,9 +116,10 @@ module.exports.newPostsHandler = async (req, res, next) => {
             await db.Posts_video.bulkCreate(listVideo);
          }
       }
+
       next(
          res.status(201).json({
-            // formData,
+            formData,
             mes: 'create new posts is success!',
          }),
       );
