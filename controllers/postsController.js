@@ -31,7 +31,29 @@ const removeFile = async (files) => {
 module.exports.getAllPostsHandler = async (req, res, next) => {
    try {
       const feedPosts = await db.Posts.findAll({
-         attributes: { exclude: ['user_posts'] },
+         attributes: {
+            exclude: ['user_posts'],
+            include: [
+               [
+                  Sequelize.literal(
+                     '(SELECT COUNT(*) FROM likeds WHERE likeds.posts_id = posts.posts_id)',
+                  ),
+                  'like_count',
+               ],
+               [
+                  Sequelize.literal(
+                     '(SELECT COUNT(*) FROM comments WHERE comments.posts_id = posts.posts_id)',
+                  ),
+                  'comment_count',
+               ],
+               [
+                  Sequelize.literal(
+                     `(SELECT EXISTS(SELECT 1 FROM likeds WHERE likeds.user_liked_posts = '${req.user.user_name}'))`,
+                  ),
+                  'status_liked',
+               ],
+            ],
+         },
          include: [
             {
                model: db.Users,
@@ -40,8 +62,6 @@ module.exports.getAllPostsHandler = async (req, res, next) => {
             },
             { model: db.Posts_image, as: 'images' },
             { model: db.Posts_video, as: 'videos' },
-            { model: db.Comments, as: 'comments' },
-            { model: db.Liked, as: 'likes' },
             {
                model: db.Blocked_posts,
                as: 'block_posts',
@@ -63,17 +83,13 @@ module.exports.getAllPostsHandler = async (req, res, next) => {
             ],
          },
          subQuery: false,
-         // offset: 2,
-         // limit: 2,
-         // order: Sequelize.literal('rand()'),
+         limit: parseInt(req.query.limit) || 15,
+         offset: parseInt(req.query.offset) || 0,
+         order: [['createdAt', 'DESC']],
       });
-      // const results = feedPosts.filter((posts) => {
-      //    if (!posts.block_posts) return false;
-      //    return !posts.block_posts.some((item) => item.user_blocked_posts === req.user.user_name);
-      // });
+
       next(
          res.status(200).json({
-            user: req.user.user_name,
             feedPosts,
          }),
       );
@@ -346,7 +362,7 @@ module.exports.blockPostsHandler = async (req, res, next) => {
       const [posts_id, user_blocked_posts] = [req.params.id, req.user.user_name];
       const [blockPosts, created] = await db.Blocked_posts.findOrCreate({
          where: { posts_id, user_blocked_posts },
-         default: {
+         defaults: {
             posts_id,
             user_blocked_posts,
          },
@@ -376,9 +392,91 @@ module.exports.deletePostsBlockedHandler = async (req, res, next) => {
                404,
             ),
          );
-      next(
+      return next(
          res.status(200).json({
             mes: 'remove is success!',
+         }),
+      );
+   } catch (error) {
+      console.log('error', error);
+      errorController.serverErrorHandle(error, res);
+   }
+};
+
+module.exports.likedPostsHandler = async (req, res, next) => {
+   try {
+      const posts_id = req.params.posts_id;
+      const [result, created] = await db.Liked.findOrCreate({
+         where: { [Op.and]: [{ posts_id }, { user_liked_posts: req.user.user_name }] },
+         defaults: {
+            posts_id,
+            user_liked_posts: req.user.user_name,
+         },
+      });
+      if (!created) {
+         await db.Liked.destroy({
+            where: { id: result.id },
+            focus: true,
+         });
+         return next(
+            res.status(200).json({
+               mes: 'unliked is success!',
+            }),
+         );
+      }
+      return next(
+         res.status(201).json({
+            mes: 'liked is success!',
+         }),
+      );
+   } catch (error) {
+      console.log('error', error);
+      errorController.serverErrorHandle(error, res);
+   }
+};
+module.exports.getCommentPostsHandler = async (req, res, next) => {
+   try {
+      const results = await db.Comments.findAll({
+         where: { posts_id: req.params.posts_id },
+         include: [
+            {
+               model: db.Users,
+               as: 'user_info',
+               attributes: ['user_name', 'full_name', 'avatar', 'about'],
+            },
+         ],
+         limit: parseInt(req.query.limit) || 15,
+         offset: parseInt(req.query.offset) || 0,
+         order: [['createdAt', 'DESC']],
+      });
+      return next(
+         res.status(200).json({
+            results,
+         }),
+      );
+   } catch (error) {
+      console.log('error', error);
+      errorController.serverErrorHandle(error, res);
+   }
+};
+
+module.exports.commentPostsHandler = async (req, res, next) => {
+   try {
+      const { posts_id, content, img } = req.body;
+      const result = await db.Comments.create({
+         content,
+         img,
+         posts_id,
+         user_comment: req.user.user_name,
+      });
+      const user = await db.Users.findOne({
+         where: { user_name: result.user_comment },
+         attributes: ['user_name', 'full_name', 'avatar', 'about'],
+      });
+      return next(
+         res.status(201).json({
+            mes: 'create is success!',
+            result: { ...result.dataValues, user_info: { ...user.dataValues } },
          }),
       );
    } catch (error) {

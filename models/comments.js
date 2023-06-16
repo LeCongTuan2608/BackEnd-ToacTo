@@ -10,7 +10,7 @@ module.exports = (sequelize, DataTypes) => {
       static associate(models) {
          // define association here
          models.Posts.hasMany(Comments, { as: 'comments', foreignKey: 'posts_id' });
-         Comments.belongsTo(models.Users, { foreignKey: 'user_comment' });
+         Comments.belongsTo(models.Users, { foreignKey: 'user_comment', as: 'user_info' });
       }
    }
    Comments.init(
@@ -27,7 +27,6 @@ module.exports = (sequelize, DataTypes) => {
          user_comment: {
             type: DataTypes.STRING,
             allowNull: false,
-            unique: true,
             validate: {
                not: ['^[a-z]+$', 'i'],
             },

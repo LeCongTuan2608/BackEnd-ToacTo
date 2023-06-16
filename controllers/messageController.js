@@ -24,7 +24,8 @@ module.exports.getMessages = async (req, res, next) => {
                   },
                ],
             },
-            limit: 15,
+            limit: req.query.limit || 15,
+            offset: req.query.offset || 0,
             order: [['createdAt', 'DESC']],
          });
       }
