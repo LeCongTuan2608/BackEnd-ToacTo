@@ -47,9 +47,13 @@ module.exports.getAllPostsHandler = async (req, res, next) => {
                   'comment_count',
                ],
                [
-                  Sequelize.literal(
-                     `(SELECT EXISTS(SELECT 1 FROM likeds WHERE likeds.user_liked_posts = '${req.user.user_name}'))`,
-                  ),
+                  Sequelize.literal(`
+                    EXISTS (
+                      SELECT 1t
+                      FROM likeds
+                      WHERE likeds.posts_id = posts.posts_id
+                        AND likeds.user_liked_posts = '${req.user.user_name}}'
+                    )`),
                   'status_liked',
                ],
             ],
@@ -477,6 +481,105 @@ module.exports.commentPostsHandler = async (req, res, next) => {
          res.status(201).json({
             mes: 'create is success!',
             result: { ...result.dataValues, user_info: { ...user.dataValues } },
+         }),
+      );
+   } catch (error) {
+      console.log('error', error);
+      errorController.serverErrorHandle(error, res);
+   }
+};
+
+module.exports.getPostUserHandler = async (req, res, next) => {
+   try {
+      if (!req.params.user_name)
+         return next(
+            errorController.errorHandler(res, `params user_name cannot be left blank!`, 404),
+         );
+      let condition;
+      if (req.params.user_name === req.user.user_name) {
+         condition = {
+            [Op.and]: [
+               { user_posts: req.params.user_name },
+               {
+                  [Op.or]: [
+                     {
+                        '$block_posts.user_blocked_posts$': { [Op.eq]: null },
+                     },
+                     {
+                        '$block_posts.user_blocked_posts$': { [Op.not]: req.user.user_name },
+                     },
+                  ],
+               },
+            ],
+         };
+      } else {
+         condition = {
+            [Op.and]: [
+               { audience: { [Op.not]: 'private' } },
+               { user_posts: req.params.user_name },
+               {
+                  [Op.or]: [
+                     {
+                        '$block_posts.user_blocked_posts$': { [Op.eq]: null },
+                     },
+                     {
+                        '$block_posts.user_blocked_posts$': { [Op.not]: req.user.user_name },
+                     },
+                  ],
+               },
+            ],
+         };
+      }
+      const results = await db.Posts.findAll({
+         attributes: {
+            exclude: ['user_posts'],
+            include: [
+               [
+                  Sequelize.literal(
+                     '(SELECT COUNT(*) FROM likeds WHERE likeds.posts_id = posts.posts_id)',
+                  ),
+                  'like_count',
+               ],
+               [
+                  Sequelize.literal(
+                     '(SELECT COUNT(*) FROM comments WHERE comments.posts_id = posts.posts_id)',
+                  ),
+                  'comment_count',
+               ],
+               [
+                  Sequelize.literal(`
+                    EXISTS (
+                      SELECT 1t
+                      FROM likeds
+                      WHERE likeds.posts_id = posts.posts_id
+                        AND likeds.user_liked_posts = '${req.user.user_name}}'
+                    )`),
+                  'status_liked',
+               ],
+            ],
+         },
+         include: [
+            {
+               model: db.Users,
+               attributes: ['user_name', 'full_name', 'relationship', 'avatar', 'about'],
+               as: 'user',
+            },
+            { model: db.Posts_image, as: 'images' },
+            { model: db.Posts_video, as: 'videos' },
+            {
+               model: db.Blocked_posts,
+               as: 'block_posts',
+            },
+         ],
+         where: condition,
+         subQuery: false,
+         limit: parseInt(req.query.limit) || 15,
+         offset: parseInt(req.query.offset) || 0,
+         order: [['createdAt', 'DESC']],
+      });
+      return next(
+         res.status(200).json({
+            results,
          }),
       );
    } catch (error) {

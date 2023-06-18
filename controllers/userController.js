@@ -425,7 +425,7 @@ module.exports.userUnBlockedHandler = async (req, res, next) => {
 };
 
 // //get user other
-module.exports.getProfileUserOtherHandler = async (req, res, next) => {
+module.exports.getProfileUserHandler = async (req, res, next) => {
    try {
       if (!req.params.user_name)
          return next(
@@ -434,13 +434,14 @@ module.exports.getProfileUserOtherHandler = async (req, res, next) => {
       // find user
       const getUser = await db.Users.findOne({
          where: { user_name: req.params.user_name },
-         attributes: { exclude: ['createdAt', 'updatedAt', 'role_id', 'pwd', 'phone', 'email'] },
+         attributes: { exclude: ['pwd'] },
       });
+
       if (!getUser) return next(errorController.errorHandler(res, `This user not exists!`, 404));
       // rerturn data user
       next(
          res.status(200).json({
-            getUser,
+            result: getUser.dataValues,
          }),
       );
    } catch (error) {

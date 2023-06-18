@@ -35,10 +35,7 @@ router.route('/following').get([authenToken], userController.getFollowingHandler
 router.route('/followers').get([authenToken], userController.getFollowersHandler);
 
 // // get profile of user other
-router.route('/:user_name/profile').get([authenToken], userController.getProfileUserOtherHandler);
-
-// // get post of user other
-// // router.route('/:user_name/posts').get([authenToken], userController.getUserOtherPostHandler);
+router.route('/profile/:user_name').get([authenToken], userController.getProfileUserHandler);
 
 // // blocked
 router.route('/blocked/:id').delete([authenToken], userController.userUnBlockedHandler);

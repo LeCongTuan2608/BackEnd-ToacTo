@@ -22,7 +22,6 @@ module.exports = (sequelize, DataTypes) => {
          user_liked_posts: {
             type: DataTypes.STRING,
             allowNull: false,
-            unique: true,
             validate: {
                not: ['^[a-z]+$', 'i'],
             },

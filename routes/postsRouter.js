@@ -35,6 +35,10 @@ router
       [authenToken, uploadFile.fields([{ name: 'images' }, { name: 'videos' }])],
       postController.newPostsHandler,
    );
+
+// // get post of user other
+router.route('/posts/:user_name').get([authenToken], postController.getPostUserHandler);
+
 //
 router.route('/').get([authenToken], postController.getAllPostsHandler); //get all feed post
 
