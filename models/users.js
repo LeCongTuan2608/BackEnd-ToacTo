@@ -54,7 +54,10 @@ module.exports = (sequelize, DataTypes) => {
          },
          phone: DataTypes.STRING,
          location: DataTypes.TEXT,
-         avatar: DataTypes.STRING,
+         avatar: {
+            type: DataTypes.JSON,
+            allowNull: true,
+         },
          about: DataTypes.TEXT,
          pwd: {
             type: DataTypes.STRING,
@@ -64,11 +67,16 @@ module.exports = (sequelize, DataTypes) => {
                not: ['^[a-z]+$', 'i'],
             },
          },
-         // ban: {
-         //    type: DataTypes.BOOLEAN,
-         //    allowNull: true,
-         //    defaultValue: false,
-         // },
+         public_info: {
+            type: DataTypes.BOOLEAN,
+            allowNull: true,
+            defaultValue: false,
+         },
+         ban: {
+            type: DataTypes.BOOLEAN,
+            allowNull: true,
+            defaultValue: false,
+         },
          role_id: {
             type: DataTypes.INTEGER,
             defaultValue: 2,

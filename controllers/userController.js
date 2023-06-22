@@ -3,10 +3,19 @@ const bcrypt = require('bcryptjs');
 const saltRounds = 10;
 const dotenv = require('dotenv');
 const errorController = require('./errorController');
+const cloudinary = require('cloudinary').v2;
 const { Op } = require('sequelize');
 dotenv.config();
 const Sequelize = require('sequelize');
 // update user
+
+const deleteFile = async (file) => {
+   try {
+      await cloudinary.api.delete_resources(file.filename, { resource_type: 'image' });
+   } catch (error) {
+      console.log('error:', error);
+   }
+};
 module.exports.updateUserHandler = async (req, res, next) => {
    try {
       //check field not empty
@@ -28,10 +37,7 @@ module.exports.updateUserHandler = async (req, res, next) => {
       //1. find user by user_name
       const user = await db.Users.findOne({
          where: {
-            [Op.or]: {
-               email: req.params.email ? req.params.email : '',
-               user_name: req.params.user_name ? req.params.user_name : '',
-            },
+            user_name: req.user.user_name,
          },
       });
 
@@ -45,10 +51,7 @@ module.exports.updateUserHandler = async (req, res, next) => {
          { ...req.body },
          {
             where: {
-               [Op.or]: {
-                  email: req.params.email ? req.params.email : '',
-                  user_name: req.params.user_name ? req.params.user_name : '',
-               },
+               user_name: req.user.user_name,
             },
          },
       );
@@ -58,6 +61,40 @@ module.exports.updateUserHandler = async (req, res, next) => {
          }),
       );
    } catch (error) {
+      console.log('error', error);
+      errorController.serverErrorHandle(error, res);
+   }
+};
+module.exports.uploadAvatarHandler = async (req, res, next) => {
+   try {
+      const file = req.file;
+      //1. find user by user_name
+      const user = await db.Users.findOne({
+         where: {
+            user_name: req.user.user_name,
+         },
+      });
+      //2.if user not exists, return error
+      if (!user) return next(errorController.errorHandler(res, `User not found!`, 404));
+
+      (user.avatar || user.avatar?.filename) && (await deleteFile(user.avatar));
+      // 4. update user
+      if (file) {
+         user.avatar = {
+            filename: file.filename,
+            url: file.path,
+         };
+      } else {
+         user.avatar = null;
+      }
+      await user.save();
+      next(
+         res.status(200).json({
+            file,
+         }),
+      );
+   } catch (error) {
+      req.file && deleteFile(req.file);
       console.log('error', error);
       errorController.serverErrorHandle(error, res);
    }

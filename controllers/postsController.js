@@ -13,14 +13,14 @@ const removeFile = async (files) => {
             files.images.map((file) => file.filename),
             { resource_type: 'image' },
          );
-         console.log(result);
+         // console.log(result);
       }
       if (files.videos) {
          const result = await cloudinary.api.delete_resources(
             files.videos.map((file) => file.filename),
             { resource_type: 'video' },
          );
-         console.log(result);
+         // console.log(result);
       }
    } catch (error) {
       console.log('error:', error);
@@ -49,10 +49,10 @@ module.exports.getAllPostsHandler = async (req, res, next) => {
                [
                   Sequelize.literal(`
                     EXISTS (
-                      SELECT 1t
+                      SELECT 1
                       FROM likeds
                       WHERE likeds.posts_id = posts.posts_id
-                        AND likeds.user_liked_posts = '${req.user.user_name}}'
+                        AND likeds.user_liked_posts = '${req.user.user_name}'
                     )`),
                   'status_liked',
                ],
@@ -549,10 +549,10 @@ module.exports.getPostUserHandler = async (req, res, next) => {
                [
                   Sequelize.literal(`
                     EXISTS (
-                      SELECT 1t
+                      SELECT 1
                       FROM likeds
                       WHERE likeds.posts_id = posts.posts_id
-                        AND likeds.user_liked_posts = '${req.user.user_name}}'
+                        AND likeds.user_liked_posts = '${req.user.user_name}'
                     )`),
                   'status_liked',
                ],

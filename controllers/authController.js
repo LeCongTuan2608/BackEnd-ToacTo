@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 const errorController = require('./errorController');
 const { Op } = require('sequelize');
+const cloudinary = require('cloudinary').v2;
 dotenv.config();
 
 const saltRounds = parseInt(process.env.SALT_ROUNDS);

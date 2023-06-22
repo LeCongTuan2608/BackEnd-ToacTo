@@ -18,8 +18,10 @@ const storageFile = new CloudinaryStorage({
       folder: (req, file) => {
          if (file.fieldname === 'images') {
             return 'post/images';
-         } else {
+         } else if (file.fieldname === 'videos') {
             return 'post/videos';
+         } else {
+            return 'avatar';
          }
       },
       allowedFormats: ['jpeg', 'png', 'jpg', 'mp3', 'mp4'],

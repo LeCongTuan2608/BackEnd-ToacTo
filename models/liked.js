@@ -10,7 +10,12 @@ module.exports = (sequelize, DataTypes) => {
       static associate(models) {
          // define association here
          models.Posts.hasMany(Liked, { as: 'likes', foreignKey: 'posts_id' });
-         Liked.belongsTo(models.Users, { foreignKey: 'user_liked_posts', as: 'user_info' });
+         Liked.belongsTo(models.Users, {
+            foreignKey: 'user_liked_posts',
+            as: 'user_info',
+            onDelete: 'CASCADE',
+            onUpdate: 'CASCADE',
+         });
       }
    }
    Liked.init(

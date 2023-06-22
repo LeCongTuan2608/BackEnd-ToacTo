@@ -10,7 +10,12 @@ module.exports = (sequelize, DataTypes) => {
       static associate(models) {
          // define association here
          models.Posts.hasMany(Comments, { as: 'comments', foreignKey: 'posts_id' });
-         Comments.belongsTo(models.Users, { foreignKey: 'user_comment', as: 'user_info' });
+         Comments.belongsTo(models.Users, {
+            foreignKey: 'user_comment',
+            as: 'user_info',
+            onDelete: 'CASCADE',
+            onUpdate: 'CASCADE',
+         });
       }
    }
    Comments.init(

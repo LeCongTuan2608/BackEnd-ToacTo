@@ -3,6 +3,9 @@ const { route } = require('express/lib/router');
 const userController = require('../controllers/userController');
 const authenToken = require('../controllers/middlewareController');
 const router = express.Router();
+const multer = require('multer');
+const { storageFile } = require('../utils/cloudinary');
+const uploadFile = multer({ storage: storageFile });
 
 // 11 router
 
@@ -43,7 +46,10 @@ router
    .route('/blocked')
    .get([authenToken], userController.getUserBlockedHandler)
    .post([authenToken], userController.userBlockedHandler);
-
+//
+router
+   .route('/avatar')
+   .patch([uploadFile.single('avatar'), authenToken], userController.uploadAvatarHandler);
 // // update, delete user
 router
    .route('/:user_name')
