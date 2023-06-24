@@ -82,10 +82,7 @@ module.exports.loginHandler = async (req, res, next) => {
 
       const existingUser = await db.Users.findOne({
          where: {
-            [Op.or]: {
-               email: data.email ? data.email : '',
-               user_name: data.user_name ? data.user_name : '',
-            },
+            email: data.email,
          },
          attributes: { exclude: ['createdAt', 'updatedAt'] },
          // raw: true,

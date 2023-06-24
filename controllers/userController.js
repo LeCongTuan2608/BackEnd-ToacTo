@@ -203,7 +203,7 @@ module.exports.getFollowingHandler = async (req, res, next) => {
    try {
       const query = `SELECT a.id, b.user_name, b.full_name, b.avatar FROM follows a INNER JOIN users b 
       ON a.user_name = '${req.user.user_name}' and a.user_follow = b.user_name
-      LIMIT ${req.query.limit || 10} OFFSET ${req.query.offset || 0}`;
+      LIMIT ${parseInt(req.query.limit) || 10} OFFSET ${parseInt(req.query.offset) || 0}`;
 
       const results = await db.sequelize.query(query, { type: Sequelize.QueryTypes.SELECT });
       next(res.status(200).json({ results }));
@@ -218,7 +218,7 @@ module.exports.getFollowersHandler = async (req, res, next) => {
    try {
       const query = `SELECT a.id, b.user_name, b.full_name, b.avatar FROM follows a INNER JOIN users b 
       ON a.user_follow = '${req.user.user_name}' and a.user_name = b.user_name
-      LIMIT ${req.query.limit || 10} OFFSET ${req.query.offset || 0}`;
+      LIMIT ${parseInt(req.query.limit) || 10} OFFSET ${parseInt(req.query.offset) || 0}`;
 
       const results = await db.sequelize.query(query, { type: Sequelize.QueryTypes.SELECT });
       next(
@@ -306,7 +306,7 @@ module.exports.getSuggestHandler = async (req, res, next) => {
       LEFT JOIN follows f ON u.user_name = f.user_follow AND f.user_name = '${req.user.user_name}'
       WHERE f.user_follow IS NULL AND u.user_name <> '${req.user.user_name}'
       ORDER BY follower DESC
-      LIMIT ${req.query.limit || 10} OFFSET ${req.query.offset || 0}`;
+      LIMIT ${parseInt(req.query.limit) || 10} OFFSET ${parseInt(req.query.offset) || 0}`;
 
       const results = await db.sequelize.query(query, { type: Sequelize.QueryTypes.SELECT });
       next(res.status(200).json({ results }));
@@ -325,7 +325,7 @@ module.exports.getFriendsHandler = async (req, res, next) => {
          req.user.user_name
       }' 
       JOIN users c ON a.user_name = c.user_name
-      LIMIT ${req.query.limit || 10} OFFSET ${req.query.offset || 0}`;
+      LIMIT ${parseInt(req.query.limit) || 10} OFFSET ${parseInt(req.query.offset) || 0}`;
 
       const results = await db.sequelize.query(query, { type: Sequelize.QueryTypes.SELECT });
       next(res.status(200).json({ results }));

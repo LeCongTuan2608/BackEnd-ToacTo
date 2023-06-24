@@ -74,6 +74,7 @@ module.exports.getAllPostsHandler = async (req, res, next) => {
          where: {
             [Op.and]: [
                { audience: { [Op.not]: 'private' } },
+               { ban: { [Op.not]: true } },
                {
                   [Op.or]: [
                      {

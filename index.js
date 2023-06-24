@@ -23,6 +23,7 @@ const userRouter = require('./routes/userRouter');
 const postRouter = require('./routes/postsRouter');
 const conversationRouter = require('./routes/conversationRouter');
 const messageRouter = require('./routes/messageRouter');
+const adminRouter = require('./routes/adminRouter');
 
 // ============================================================================
 const saltRounds = parseInt(process.env.SALT_ROUNDS);
@@ -136,6 +137,8 @@ app.use('/token', refreshTokenRouter);
 app.use('/feed-posts', postRouter);
 app.use('/conversation', conversationRouter);
 app.use('/message', messageRouter);
+app.use('/admin', adminRouter);
+
 connectDB(); // connect to db
 
 app.listen(PORT, () => console.log(`Example app listening at http://localhost:${PORT}`));
