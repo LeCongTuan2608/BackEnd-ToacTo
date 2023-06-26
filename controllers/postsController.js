@@ -467,7 +467,7 @@ module.exports.getCommentPostsHandler = async (req, res, next) => {
 
 module.exports.commentPostsHandler = async (req, res, next) => {
    try {
-      const { posts_id, content, img } = req.body;
+      const { posts_id, content, img, commentator, name_commentator, owner_posts } = req.body;
       const result = await db.Comments.create({
          content,
          img,
@@ -478,6 +478,33 @@ module.exports.commentPostsHandler = async (req, res, next) => {
          where: { user_name: result.user_comment },
          attributes: ['user_name', 'full_name', 'avatar', 'about'],
       });
+      if (commentator !== owner_posts) {
+         const notification = await db.Notification.create({
+            sender: commentator,
+            receiver: owner_posts,
+            title: 'New Comment',
+            content: `${name_commentator} just commented on your post.`,
+            type: 'COMMENT',
+            related: {
+               posts_id: posts_id,
+               owner_posts: owner_posts,
+               commentator: commentator,
+               name_commentator: name_commentator,
+               avatar_commentator: user.avatar.url,
+            },
+         });
+         return next(
+            res.status(201).json({
+               mes: 'create is success!',
+               result: {
+                  ...result.dataValues,
+                  user_info: { ...user.dataValues },
+                  notification: { ...notification.dataValues },
+               },
+            }),
+         );
+      }
+
       return next(
          res.status(201).json({
             mes: 'create is success!',

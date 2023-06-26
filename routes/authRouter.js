@@ -18,6 +18,8 @@ router.route('/forgot-password').post(authController.forgotHandler);
 
 // // change password
 router.route('/change-password').patch([authenToken], authController.changePasswordHandler);
+// // change email
+router.route('/change-email').patch([authenToken], authController.changeEmailHandler);
 
 // // get profile this user
 router.route('/').get([authenToken], authController.getUserHandler);

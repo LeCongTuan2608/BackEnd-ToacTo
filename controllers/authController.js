@@ -195,43 +195,25 @@ module.exports.forgotHandler = (req, res, next) => {
 // // 5 change password
 module.exports.changePasswordHandler = async (req, res, next) => {
    try {
-      const { user_name, old_pwd, new_pwd } = req.body;
-      // check field body
-      if (!(user_name && old_pwd && new_pwd))
-         return next(
-            errorController.errorHandler(
-               res,
-               `user_name, old_pwd, new_pwd cannot be left blank!`,
-               404,
-            ),
-         );
-      // check user_name in header
-      if (user_name !== req.user.user_name)
-         return next(
-            errorController.errorHandler(res, `You are not allowed to delete this user`, 403),
-         );
+      const { old_pwd, new_pwd } = req.body;
       //1. find user by user_name
       const user = await db.Users.findOne({
          where: {
-            user_name: req.body.user_name,
+            user_name: req.user.user_name,
          },
       });
       //2.if user not exists, return error
-      if (!user) return next(errorController.errorHandler(res, `user_name not found!`, 404));
+      if (!user) return next(errorController.errorHandler(res, `This user does no exist!`, 404));
       //3. if user exists, check password
       const isPasswordValid = comparePassword(old_pwd, user.pwd);
-      if (!isPasswordValid) return next(errorController.errorHandler(res, `Invalid password`, 403));
+      if (!isPasswordValid)
+         return next(errorController.errorHandler(res, `Old password is not correct!!`, 403));
 
       const hashPassword = hashingPassword(new_pwd);
       //4. update password
-      await db.Users.update(
-         { pwd: hashPassword },
-         {
-            where: {
-               user_name: req.body.user_name,
-            },
-         },
-      );
+      user.pwd = hashPassword;
+      await user.save();
+
       res.status(200).json({
          message: 'Changed password success',
       });
@@ -250,7 +232,38 @@ module.exports.getUserHandler = async (req, res, next) => {
          },
          attributes: { exclude: ['pwd'] },
       });
+
       next(res.status(200).json({ result }));
+   } catch (error) {
+      console.log('error', error);
+      errorController.serverErrorHandle(error, res);
+   }
+};
+
+module.exports.changeEmailHandler = async (req, res, next) => {
+   try {
+      if (!req.body.email)
+         return next(errorController.errorHandler(res, `field email cannot be left blank!`, 400));
+      const result = await db.Users.findOne({
+         where: {
+            user_name: req.user.user_name,
+         },
+      });
+      const checkEmail = await db.Users.findOne({
+         where: {
+            email: req.body.email,
+         },
+      });
+
+      //2.if user not exists, return error
+      if (!result) return next(errorController.errorHandler(res, `This user does no exist!`, 404));
+      //2.check email
+      if (checkEmail)
+         return next(errorController.errorHandler(res, `This email already exists!`, 404));
+      result.email = req.body.email;
+      result.save();
+
+      next(res.status(200).json({ message: 'Changed email success' }));
    } catch (error) {
       console.log('error', error);
       errorController.serverErrorHandle(error, res);

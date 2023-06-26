@@ -23,6 +23,7 @@ const userRouter = require('./routes/userRouter');
 const postRouter = require('./routes/postsRouter');
 const conversationRouter = require('./routes/conversationRouter');
 const messageRouter = require('./routes/messageRouter');
+const notificationRouter = require('./routes/notificationRouter');
 const adminRouter = require('./routes/adminRouter');
 
 // ============================================================================
@@ -137,6 +138,7 @@ app.use('/token', refreshTokenRouter);
 app.use('/feed-posts', postRouter);
 app.use('/conversation', conversationRouter);
 app.use('/message', messageRouter);
+app.use('/notification', notificationRouter);
 app.use('/admin', adminRouter);
 
 connectDB(); // connect to db
