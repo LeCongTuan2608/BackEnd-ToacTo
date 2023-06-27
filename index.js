@@ -1,5 +1,4 @@
 const express = require('express');
-const app = express();
 const morgan = require('morgan');
 const connectDB = require('./database/db');
 const db = require('./models/index');
@@ -8,10 +7,9 @@ const cors = require('cors');
 const { sequelize } = require('./models');
 const dotenv = require('dotenv');
 const { Op } = require('sequelize');
-
+//
 const { createServer } = require('http');
 const { Server } = require('socket.io');
-const httpServer = createServer(app);
 
 dotenv.config();
 // parse json
@@ -26,6 +24,9 @@ const messageRouter = require('./routes/messageRouter');
 const notificationRouter = require('./routes/notificationRouter');
 const adminRouter = require('./routes/adminRouter');
 
+//
+const app = express();
+const httpServer = createServer(app);
 // ============================================================================
 const saltRounds = parseInt(process.env.SALT_ROUNDS);
 const hashingPassword = (password) => {
@@ -75,6 +76,22 @@ sequelize
    .catch((err) => {
       console.log(err);
    });
+
+// get: xác định route, use: là apply middleware
+app.get('/', (req, res) => {
+   return res.send('hello word!!');
+});
+app.use('/auth', authRouter); // (login, register, ..)
+app.use('/users', userRouter);
+app.use('/token', refreshTokenRouter);
+app.use('/feed-posts', postRouter);
+app.use('/conversation', conversationRouter);
+app.use('/message', messageRouter);
+app.use('/notification', notificationRouter);
+app.use('/admin', adminRouter);
+
+connectDB(); // connect to db
+
 httpServer.listen(PORT, (e) => {
    console.log('Server is running on port: ', PORT);
    console.log('Go to / to see the result');
@@ -131,20 +148,3 @@ io.on('connection', (socket) => {
       console.log(`A user disconnected ${socket.id}`);
    });
 });
-
-// get: xác định route, use: là apply middleware
-app.get('/', (req, res) => {
-   return res.send('hello word!!');
-});
-app.use('/auth', authRouter); // (login, register, ..)
-app.use('/users', userRouter);
-app.use('/token', refreshTokenRouter);
-app.use('/feed-posts', postRouter);
-app.use('/conversation', conversationRouter);
-app.use('/message', messageRouter);
-app.use('/notification', notificationRouter);
-app.use('/admin', adminRouter);
-
-connectDB(); // connect to db
-
-app.listen(PORT, () => console.log(`Example app listening at http://localhost:${PORT}`));
