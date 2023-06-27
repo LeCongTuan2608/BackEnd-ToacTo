@@ -6,7 +6,7 @@ const Sequelize = require('sequelize');
 module.exports.createConversation = async (req, res, next) => {
    try {
       const { member, last_message, group, group_name, avatar } = req.body;
-      const created = await db.Conversation.create({
+      const created = await db.conversation.create({
          member: member,
          last_message: {
             sender: req.user.user_name,
@@ -16,7 +16,7 @@ module.exports.createConversation = async (req, res, next) => {
          avatar: (group && avatar) || null,
          checked: [],
       });
-      const users = await db.Users.findAll({
+      const users = await db.users.findAll({
          where: {
             user_name: created.member,
          },
@@ -31,7 +31,7 @@ module.exports.createConversation = async (req, res, next) => {
 
 module.exports.getConversation = async (req, res, next) => {
    try {
-      const conversation = await db.Conversation.findAll({
+      const conversation = await db.conversation.findAll({
          where: {
             [Op.and]: [
                {
@@ -53,7 +53,7 @@ module.exports.getConversation = async (req, res, next) => {
          },
          include: [
             {
-               model: db.Users,
+               model: db.users,
                attributes: ['user_name', 'full_name', 'avatar'],
                through: {
                   attributes: [],
@@ -71,7 +71,7 @@ module.exports.getConversation = async (req, res, next) => {
 };
 module.exports.getConversationByUserName = async (req, res, next) => {
    try {
-      const conversation = await db.Conversation.findOne({
+      const conversation = await db.conversation.findOne({
          where: {
             [Op.and]: [
                {
@@ -87,7 +87,7 @@ module.exports.getConversationByUserName = async (req, res, next) => {
          },
          include: [
             {
-               model: db.Users,
+               model: db.users,
                attributes: ['user_name', 'full_name', 'avatar'],
                through: {
                   attributes: [],
@@ -103,7 +103,7 @@ module.exports.getConversationByUserName = async (req, res, next) => {
 };
 module.exports.checkedConversation = async (req, res, next) => {
    try {
-      const result = await db.Conversation.findOne({
+      const result = await db.conversation.findOne({
          where: {
             [Op.and]: [
                { id: req.params.conversationId },
@@ -123,7 +123,7 @@ module.exports.checkedConversation = async (req, res, next) => {
 };
 module.exports.removeConversation = async (req, res, next) => {
    try {
-      const result = await db.Conversation.findOne({
+      const result = await db.conversation.findOne({
          where: {
             [Op.and]: [
                { id: req.params.conversationId },
@@ -135,7 +135,7 @@ module.exports.removeConversation = async (req, res, next) => {
          result.member_remove_chat = [...result.member_remove_chat, req.user.user_name];
       else result.member_remove_chat = [req.user.user_name];
       await result.save();
-      await db.Message.update(
+      await db.message.update(
          {
             member_remove_message: db.sequelize.literal(
                `JSON_ARRAY_APPEND(COALESCE(member_remove_message, '[]'), '$', '${req.user.user_name}')`,

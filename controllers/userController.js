@@ -35,7 +35,7 @@ module.exports.updateUserHandler = async (req, res, next) => {
          );
 
       //1. find user by user_name
-      const user = await db.Users.findOne({
+      const user = await db.users.findOne({
          where: {
             user_name: req.user.user_name,
          },
@@ -47,7 +47,7 @@ module.exports.updateUserHandler = async (req, res, next) => {
       //3. if user exists, check password
 
       //4. update user
-      await db.Users.update(
+      await db.users.update(
          { ...req.body },
          {
             where: {
@@ -69,7 +69,7 @@ module.exports.uploadAvatarHandler = async (req, res, next) => {
    try {
       const file = req.file;
       //1. find user by user_name
-      const user = await db.Users.findOne({
+      const user = await db.users.findOne({
          where: {
             user_name: req.user.user_name,
          },
@@ -126,7 +126,7 @@ module.exports.deleteUserHandler = async (req, res, next) => {
          force: true,
       });
       //delete user
-      await db.Users.destroy({
+      await db.users.destroy({
          where: {
             [Op.or]: {
                user_name: req.params.user_name ? req.params.user_name : '',
@@ -167,7 +167,7 @@ module.exports.getPostHandler = (req, res, next) => {
 //follow user other
 module.exports.followHandler = async (req, res, next) => {
    try {
-      const [result, created] = await db.Follow.findOrCreate({
+      const [result, created] = await db.follow.findOrCreate({
          where: {
             [Op.and]: [{ user_follow: req.params.user_follow }, { user_name: req.user.user_name }],
          },
@@ -177,13 +177,13 @@ module.exports.followHandler = async (req, res, next) => {
          },
       });
       if (!created) {
-         await db.Notification.destroy({
+         await db.notification.destroy({
             where: Sequelize.literal(
                `JSON_EXTRACT(related, '$.followers') = '${req.user.user_name}' AND JSON_EXTRACT(related, '$.followed') = '${req.params.user_follow}'`,
             ),
             focus: true,
          });
-         await db.Follow.destroy({
+         await db.follow.destroy({
             where: {
                [Op.and]: [
                   { user_follow: req.params.user_follow },
@@ -194,7 +194,7 @@ module.exports.followHandler = async (req, res, next) => {
          });
       } else {
          if (req.user.user_name !== req.params.user_follow) {
-            await db.Notification.create({
+            await db.notification.create({
                sender: req.user.user_name,
                receiver: req.params.user_follow,
                title: 'New Follow',
@@ -260,7 +260,7 @@ module.exports.unFollowHandler = async (req, res, next) => {
          return next(errorController.errorHandler(res, 'params id cannot be left blank!', 404));
 
       //2.check user unfollow exists in tb Following
-      const user_follow = await db.Following.findOne({
+      const user_follow = await db.following.findOne({
          where: {
             id: req.params.id,
          },
@@ -269,7 +269,7 @@ module.exports.unFollowHandler = async (req, res, next) => {
          return next(errorController.errorHandler(res, 'you are not following this user!', 404));
 
       //3. remove user following (unfollow)
-      await db.Following.destroy({
+      await db.following.destroy({
          where: {
             [Op.and]: {
                user_name: user_follow.user_name,
@@ -279,7 +279,7 @@ module.exports.unFollowHandler = async (req, res, next) => {
          force: true,
       });
       //3. remove user followers (unfollow)
-      await db.Followers.destroy({
+      await db.followers.destroy({
          where: {
             [Op.and]: {
                user_name: user_follow.user_following,
@@ -358,7 +358,7 @@ module.exports.getFriendsHandler = async (req, res, next) => {
 //get all user
 module.exports.getAllUserHandler = async (req, res, next) => {
    try {
-      const users = await db.Users.findAll({
+      const users = await db.users.findAll({
          attributes: ['user_name', 'full_name', 'gender', 'relationship', 'about', 'avatar'],
          order: Sequelize.literal('rand()'),
       });
@@ -377,7 +377,7 @@ module.exports.getAllUserHandler = async (req, res, next) => {
 // search users
 module.exports.searchUserHandler = async (req, res, next) => {
    try {
-      const users = await db.Users.findAll({
+      const users = await db.users.findAll({
          where: {
             user_name: {
                [Op.substring]: req.params?.user_name !== ' ' ? req.params?.user_name.trim() : '@',
@@ -403,12 +403,12 @@ module.exports.getUserBlockedHandler = async (req, res, next) => {
       if (!req.user.user_name)
          return next(errorController.errorHandler(res, 'user_name cannot be left blank!', 404));
 
-      const userBlocked = await db.Blocked_users.findAll({
+      const userBlocked = await db.blocked_users.findAll({
          where: { user_name: req.user.user_name },
          attributes: ['id'],
          include: [
             {
-               model: db.Users,
+               model: db.users,
                attributes: ['user_name', 'full_name', 'avatar'],
             },
          ],
@@ -431,11 +431,11 @@ module.exports.userBlockedHandler = async (req, res, next) => {
             errorController.errorHandler(res, 'field user_blocked cannot be left blank!', 404),
          );
       //1. check user exists in db
-      const user = await db.Users.findOne({ where: { user_name: req.body.user_blocked } });
+      const user = await db.users.findOne({ where: { user_name: req.body.user_blocked } });
       if (!user) return next(errorController.errorHandler(res, 'This user not exists!', 404));
 
       //2. insert user blocked
-      const [userBlocked, created] = await db.Blocked_users.findOrCreate({
+      const [userBlocked, created] = await db.blocked_users.findOrCreate({
          where: { user_name: req.user.user_name },
          defaults: {
             user_blocked: req.body.user_blocked,
@@ -460,11 +460,11 @@ module.exports.userUnBlockedHandler = async (req, res, next) => {
       if (!req.params.id)
          return next(errorController.errorHandler(res, 'params id cannot be left blank!', 404));
       //1. check user exists in tb
-      const userBlocked = await db.Blocked_users.findOne({ where: { id: req.params.id } });
+      const userBlocked = await db.blocked_users.findOne({ where: { id: req.params.id } });
       if (!userBlocked) return next(errorController.errorHandler(res, 'This user not found!', 404));
 
       //2. delete
-      await db.Blocked_users.destroy({
+      await db.blocked_users.destroy({
          where: {
             id: req.params.id,
          },
@@ -489,7 +489,7 @@ module.exports.getProfileUserHandler = async (req, res, next) => {
             errorController.errorHandler(res, `params user_name cannot be left blank!`, 404),
          );
       // find user
-      const getUser = await db.Users.findOne({
+      const getUser = await db.users.findOne({
          where: { user_name: req.params.user_name },
          attributes: { exclude: ['pwd'] },
       });

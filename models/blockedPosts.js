@@ -1,7 +1,7 @@
 'use strict';
 const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-   class Blocked_posts extends Model {
+   class blocked_posts extends Model {
       /**
        * Helper method for defining associations.
        * This method is not a part of Sequelize lifecycle.
@@ -9,18 +9,18 @@ module.exports = (sequelize, DataTypes) => {
        */
       static associate(models) {
          // define association here
-         Blocked_posts.belongsTo(models.Users, {
+         blocked_posts.belongsTo(models.users, {
             foreignKey: 'user_blocked_posts',
          });
-         models.Users.hasMany(Blocked_posts, {
+         models.users.hasMany(blocked_posts, {
             foreignKey: 'user_blocked_posts',
          });
 
-         Blocked_posts.belongsTo(models.Posts, { foreignKey: 'posts_id', as: 'posts' });
-         models.Posts.hasMany(Blocked_posts, { foreignKey: 'posts_id', as: 'block_posts' });
+         blocked_posts.belongsTo(models.posts, { foreignKey: 'posts_id', as: 'posts' });
+         models.posts.hasMany(blocked_posts, { foreignKey: 'posts_id', as: 'block_posts' });
       }
    }
-   Blocked_posts.init(
+   blocked_posts.init(
       {
          posts_id: {
             type: DataTypes.INTEGER,
@@ -41,5 +41,5 @@ module.exports = (sequelize, DataTypes) => {
          timestamps: true,
       },
    );
-   return Blocked_posts;
+   return blocked_posts;
 };

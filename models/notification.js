@@ -1,7 +1,7 @@
 'use strict';
 const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-   class Notification extends Model {
+   class notification extends Model {
       /**
        * Helper method for defining associations.
        * This method is not a part of Sequelize lifecycle.
@@ -9,11 +9,11 @@ module.exports = (sequelize, DataTypes) => {
        */
       static associate(models) {
          // define association here
-         //  models.Users.hasMany(Notification, { as: 'notification', foreignKey: 'conversation_id' });
-         Notification.belongsTo(models.Users, { foreignKey: 'sender', as: 'notifi_sender' });
+         //  models.users.hasMany(notification, { as: 'notification', foreignKey: 'conversation_id' });
+         notification.belongsTo(models.users, { foreignKey: 'sender', as: 'notifi_sender' });
       }
    }
-   Notification.init(
+   notification.init(
       {
          sender: {
             type: DataTypes.STRING,
@@ -50,5 +50,5 @@ module.exports = (sequelize, DataTypes) => {
          timestamps: true,
       },
    );
-   return Notification;
+   return notification;
 };

@@ -9,7 +9,7 @@ module.exports.getAllUsersHandler = async (req, res, next) => {
    try {
       if (req.user.role_id !== 1)
          return errorController.errorHandler(res, 'You do not have access!!', 403);
-      const results = await db.Users.findAll({
+      const results = await db.users.findAll({
          where: {
             [Op.and]: [
                { user_name: { [Op.not]: req.user.user_name } },
@@ -20,7 +20,7 @@ module.exports.getAllUsersHandler = async (req, res, next) => {
          },
          include: [
             {
-               model: db.Roles,
+               model: db.roles,
                as: 'role',
                attributes: ['role_name'],
             },
@@ -37,7 +37,7 @@ module.exports.getAllPostsHandler = async (req, res, next) => {
    try {
       if (req.user.role_id !== 1)
          return errorController.errorHandler(res, 'You do not have access!!', 403);
-      const results = await db.Posts.findAll({
+      const results = await db.posts.findAll({
          attributes: {
             exclude: ['user_posts'],
             include: [
@@ -67,14 +67,14 @@ module.exports.getAllPostsHandler = async (req, res, next) => {
          },
          include: [
             {
-               model: db.Users,
+               model: db.users,
                attributes: ['user_name', 'full_name', 'relationship', 'avatar', 'about'],
                as: 'user',
             },
-            { model: db.Posts_image, as: 'images' },
-            { model: db.Posts_video, as: 'videos' },
+            { model: db.posts_image, as: 'images' },
+            { model: db.posts_video, as: 'videos' },
             {
-               model: db.Blocked_posts,
+               model: db.blocked_posts,
                as: 'block_posts',
             },
          ],
@@ -96,7 +96,7 @@ module.exports.banUsersHandler = async (req, res, next) => {
       if (req.user.role_id !== 1)
          return errorController.errorHandler(res, 'You do not have access!!', 403);
 
-      const result = await db.Users.findOne({
+      const result = await db.users.findOne({
          where: {
             user_name: req.params.user_name,
          },
@@ -122,7 +122,7 @@ module.exports.banPostsHandler = async (req, res, next) => {
       if (req.user.role_id !== 1)
          return errorController.errorHandler(res, 'You do not have access!!', 403);
 
-      const result = await db.Posts.findOne({
+      const result = await db.posts.findOne({
          where: {
             posts_id: req.params.id,
          },
@@ -146,7 +146,7 @@ module.exports.getBannedUsersHandler = async (req, res, next) => {
       if (req.user.role_id !== 1)
          return errorController.errorHandler(res, 'You do not have access!!', 403);
 
-      const results = await db.Users.findAll({
+      const results = await db.users.findAll({
          where: {
             [Op.and]: [
                { user_name: { [Op.not]: req.user.user_name } },
@@ -157,7 +157,7 @@ module.exports.getBannedUsersHandler = async (req, res, next) => {
          },
          include: [
             {
-               model: db.Roles,
+               model: db.roles,
                as: 'role',
                attributes: ['role_name'],
             },
@@ -176,7 +176,7 @@ module.exports.getBannedPostsHandler = async (req, res, next) => {
       if (req.user.role_id !== 1)
          return errorController.errorHandler(res, 'You do not have access!!', 403);
 
-      const results = await db.Posts.findAll({
+      const results = await db.posts.findAll({
          attributes: {
             exclude: ['user_posts'],
             include: [
@@ -206,14 +206,14 @@ module.exports.getBannedPostsHandler = async (req, res, next) => {
          },
          include: [
             {
-               model: db.Users,
+               model: db.users,
                attributes: ['user_name', 'full_name', 'relationship', 'avatar', 'about'],
                as: 'user',
             },
-            { model: db.Posts_image, as: 'images' },
-            { model: db.Posts_video, as: 'videos' },
+            { model: db.posts_image, as: 'images' },
+            { model: db.posts_video, as: 'videos' },
             {
-               model: db.Blocked_posts,
+               model: db.blocked_posts,
                as: 'block_posts',
             },
          ],

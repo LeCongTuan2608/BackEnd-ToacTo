@@ -1,7 +1,7 @@
 'use strict';
 const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-   class Blocked_users extends Model {
+   class blocked_users extends Model {
       /**
        * Helper method for defining associations.
        * This method is not a part of Sequelize lifecycle.
@@ -9,11 +9,11 @@ module.exports = (sequelize, DataTypes) => {
        */
       static associate(models) {
          // define association here
-         models.Users.hasMany(Blocked_users, { foreignKey: 'user_name' });
-         Blocked_users.belongsTo(models.Users, { foreignKey: 'user_blocked' });
+         models.users.hasMany(blocked_users, { foreignKey: 'user_name' });
+         blocked_users.belongsTo(models.users, { foreignKey: 'user_blocked' });
       }
    }
-   Blocked_users.init(
+   blocked_users.init(
       {
          user_blocked: {
             allowNull: false,
@@ -36,5 +36,5 @@ module.exports = (sequelize, DataTypes) => {
          timestamps: true,
       },
    );
-   return Blocked_users;
+   return blocked_users;
 };

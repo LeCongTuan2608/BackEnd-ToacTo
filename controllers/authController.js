@@ -32,7 +32,7 @@ module.exports.registerHandler = async (req, res, next) => {
             400,
          );
       //1. find user or create (if user not exists create new user, return error when user exists)
-      const [user, created] = await db.Users.findOrCreate({
+      const [user, created] = await db.users.findOrCreate({
          where: {
             [Op.or]: {
                email: data.email,
@@ -80,7 +80,7 @@ module.exports.loginHandler = async (req, res, next) => {
          );
       //1. find user
 
-      const existingUser = await db.Users.findOne({
+      const existingUser = await db.users.findOne({
          where: {
             email: data.email,
          },
@@ -158,7 +158,7 @@ module.exports.logoutHandler = async (req, res, next) => {
          return next(errorController.errorHandler(res, `user_name cannot be left blank!`, 404));
 
       // 1.find user
-      const user = await db.Users.findOne({
+      const user = await db.users.findOne({
          where: {
             user_name: req.body.user_name,
          },
@@ -197,7 +197,7 @@ module.exports.changePasswordHandler = async (req, res, next) => {
    try {
       const { old_pwd, new_pwd } = req.body;
       //1. find user by user_name
-      const user = await db.Users.findOne({
+      const user = await db.users.findOne({
          where: {
             user_name: req.user.user_name,
          },
@@ -226,7 +226,7 @@ module.exports.changePasswordHandler = async (req, res, next) => {
 // // 6 get user
 module.exports.getUserHandler = async (req, res, next) => {
    try {
-      const result = await db.Users.findOne({
+      const result = await db.users.findOne({
          where: {
             user_name: req.user.user_name,
          },
@@ -244,12 +244,12 @@ module.exports.changeEmailHandler = async (req, res, next) => {
    try {
       if (!req.body.email)
          return next(errorController.errorHandler(res, `field email cannot be left blank!`, 400));
-      const result = await db.Users.findOne({
+      const result = await db.users.findOne({
          where: {
             user_name: req.user.user_name,
          },
       });
-      const checkEmail = await db.Users.findOne({
+      const checkEmail = await db.users.findOne({
          where: {
             email: req.body.email,
          },

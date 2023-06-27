@@ -7,13 +7,13 @@ dotenv.config();
 
 module.exports.getNotificationHandler = async (req, res, next) => {
    try {
-      const results = await db.Notification.findAll({
+      const results = await db.notification.findAll({
          where: {
             receiver: req.user.user_name,
          },
          include: [
             {
-               model: db.Users,
+               model: db.users,
                as: 'notifi_sender',
                attributes: ['user_name', 'full_name', 'avatar'],
             },
@@ -23,7 +23,7 @@ module.exports.getNotificationHandler = async (req, res, next) => {
          offset: parseInt(req.query.offset) || 0,
          order: [['createdAt', 'DESC']],
       });
-      const notificationCount = await db.Notification.count({
+      const notificationCount = await db.notification.count({
          where: {
             receiver: req.user.user_name,
             checked: false,
@@ -41,7 +41,7 @@ module.exports.banUsersHandler = async (req, res, next) => {
       if (req.user.role_id !== 1)
          return errorController.errorHandler(res, 'You do not have access!!', 403);
 
-      const result = await db.Users.findOne({
+      const result = await db.users.findOne({
          where: {
             user_name: req.params.user_name,
          },
@@ -67,7 +67,7 @@ module.exports.banPostsHandler = async (req, res, next) => {
       if (req.user.role_id !== 1)
          return errorController.errorHandler(res, 'You do not have access!!', 403);
 
-      const result = await db.Posts.findOne({
+      const result = await db.posts.findOne({
          where: {
             posts_id: req.params.id,
          },

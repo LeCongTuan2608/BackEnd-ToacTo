@@ -30,7 +30,7 @@ const removeFile = async (files) => {
 // get all post
 module.exports.getAllPostsHandler = async (req, res, next) => {
    try {
-      const feedPosts = await db.Posts.findAll({
+      const feedPosts = await db.posts.findAll({
          attributes: {
             exclude: ['user_posts'],
             include: [
@@ -60,14 +60,14 @@ module.exports.getAllPostsHandler = async (req, res, next) => {
          },
          include: [
             {
-               model: db.Users,
+               model: db.users,
                attributes: ['user_name', 'full_name', 'relationship', 'avatar', 'about'],
                as: 'user',
             },
-            { model: db.Posts_image, as: 'images' },
-            { model: db.Posts_video, as: 'videos' },
+            { model: db.posts_image, as: 'images' },
+            { model: db.posts_video, as: 'videos' },
             {
-               model: db.Blocked_posts,
+               model: db.blocked_posts,
                as: 'block_posts',
             },
          ],
@@ -118,7 +118,7 @@ module.exports.newPostsHandler = async (req, res, next) => {
             errorController.errorHandler(res, 'You are not allowed to create this post', 403),
          );
       }
-      const newPosts = await db.Posts.create({
+      const newPosts = await db.posts.create({
          audience: formData?.audience || 'public',
          content: formData?.content,
          user_posts: req.user.user_name,
@@ -128,13 +128,13 @@ module.exports.newPostsHandler = async (req, res, next) => {
             const listImages = formData.images.map((image) => {
                return { url: image.path, filename: image.filename, posts_id: newPosts.posts_id };
             });
-            await db.Posts_image.bulkCreate(listImages);
+            await db.posts_image.bulkCreate(listImages);
          }
          if (formData.videos && formData.videos.length !== 0) {
             const listVideo = formData.videos.map((video) => {
                return { url: video.path, filename: video.filename, posts_id: newPosts.posts_id };
             });
-            await db.Posts_video.bulkCreate(listVideo);
+            await db.posts_video.bulkCreate(listVideo);
          }
       }
 
@@ -154,13 +154,13 @@ module.exports.newPostsHandler = async (req, res, next) => {
 // get posts by id
 module.exports.getPostsByIdHandler = async (req, res, next) => {
    try {
-      const result = await db.Posts.findOne({
+      const result = await db.posts.findOne({
          where: { posts_id: req.params.id },
          include: [
-            { model: db.Posts_image, as: 'images' },
-            { model: db.Posts_video, as: 'videos' },
-            { model: db.Comments, as: 'comments' },
-            { model: db.Liked, as: 'likes' },
+            { model: db.posts_image, as: 'images' },
+            { model: db.posts_video, as: 'videos' },
+            { model: db.comments, as: 'comments' },
+            { model: db.liked, as: 'likes' },
          ],
       });
       if (result.audience === 'private' && req.user.user_name !== result.user_posts)
@@ -195,12 +195,12 @@ module.exports.updatePostsByIdHandler = async (req, res, next) => {
          );
       }
       // find post before update
-      const result = await db.Posts.findOne({ where: { posts_id: req.params.id } });
+      const result = await db.posts.findOne({ where: { posts_id: req.params.id } });
       //check post exists?
       if (result === null)
          return next(errorController.errorHandler(res, 'This post could not be found', 404));
 
-      await db.Posts.update(
+      await db.posts.update(
          {
             audience: formData?.audience || 'public',
             content: formData?.content,
@@ -213,12 +213,12 @@ module.exports.updatePostsByIdHandler = async (req, res, next) => {
          },
       );
       // delete image in cloud
-      const imageResult = await db.Posts_image.findAll({
+      const imageResult = await db.posts_image.findAll({
          where: {
             posts_id: req.params.id,
          },
       });
-      const videoResult = await db.Posts_video.findAll({
+      const videoResult = await db.posts_video.findAll({
          where: {
             posts_id: req.params.id,
          },
@@ -226,13 +226,13 @@ module.exports.updatePostsByIdHandler = async (req, res, next) => {
       await removeFile({ images: imageResult, videos: videoResult });
 
       //delete all images and videos
-      await db.Posts_image.destroy({
+      await db.posts_image.destroy({
          where: {
             posts_id: req.params.id,
          },
          force: true,
       });
-      await db.Posts_video.destroy({
+      await db.posts_video.destroy({
          where: {
             posts_id: req.params.id,
          },
@@ -245,13 +245,13 @@ module.exports.updatePostsByIdHandler = async (req, res, next) => {
             const listImages = formData.images.map((image) => {
                return { url: image.path, filename: image.filename, posts_id: req.params.id };
             });
-            await db.Posts_image.bulkCreate(listImages);
+            await db.posts_image.bulkCreate(listImages);
          }
          if (formData.videos && formData.videos.length !== 0) {
             const listVideo = formData.videos.map((video) => {
                return { url: video.path, filename: video.filename, posts_id: req.params.id };
             });
-            await db.Posts_video.bulkCreate(listVideo);
+            await db.posts_video.bulkCreate(listVideo);
          }
       }
 
@@ -274,7 +274,7 @@ module.exports.updatePostsByIdHandler = async (req, res, next) => {
 // delete posts by id
 module.exports.deletePostsByIdHandler = async (req, res, next) => {
    try {
-      const deletePosts = await db.Posts.destroy({
+      const deletePosts = await db.posts.destroy({
          where: { posts_id: req.params.id },
          focus: true,
       });
@@ -294,18 +294,18 @@ module.exports.getAllPostsBlockedHandler = async (req, res, next) => {
          return next(errorController.errorHandler(res, 'Username field not found!', 404));
       if (req.body.user_name !== req.user.user_name)
          return next(errorController.errorHandler(res, 'You can not see these posts!', 403));
-      const results = await db.Blocked_posts.findAll({
+      const results = await db.blocked_posts.findAll({
          where: {
             user_blocked_posts: req.body.user_name,
          },
          include: [
             {
-               model: db.Posts,
+               model: db.posts,
                as: 'posts',
                attributes: { exclude: ['user_posts'] },
                include: [
                   {
-                     model: db.Users,
+                     model: db.users,
                      as: 'user',
                      attributes: ['user_name', 'full_name', 'avatar', 'about'],
                   },
@@ -332,19 +332,19 @@ module.exports.getAllPostsBlockedHandler = async (req, res, next) => {
 // get posts blocked by id
 module.exports.getPostsBlockedByIdHandler = async (req, res, next) => {
    try {
-      const result = await db.Blocked_posts.findOne({
+      const result = await db.blocked_posts.findOne({
          where: {
             [Op.and]: [{ user_blocked_posts: req.user.user_name }, { posts_id: req.params.id }],
          },
          attributes: { exclude: ['user_blocked_posts'] },
          include: [
             {
-               model: db.Posts,
+               model: db.posts,
                as: 'posts',
                attributes: { exclude: ['user_posts'] },
                include: [
                   {
-                     model: db.Users,
+                     model: db.users,
                      as: 'user',
                      attributes: ['user_name', 'full_name', 'avatar', 'about'],
                   },
@@ -365,7 +365,7 @@ module.exports.getPostsBlockedByIdHandler = async (req, res, next) => {
 module.exports.blockPostsHandler = async (req, res, next) => {
    try {
       const [posts_id, user_blocked_posts] = [req.params.id, req.user.user_name];
-      const [blockPosts, created] = await db.Blocked_posts.findOrCreate({
+      const [blockPosts, created] = await db.blocked_posts.findOrCreate({
          where: { posts_id, user_blocked_posts },
          defaults: {
             posts_id,
@@ -388,7 +388,7 @@ module.exports.blockPostsHandler = async (req, res, next) => {
 // delete posts blocked by id
 module.exports.deletePostsBlockedHandler = async (req, res, next) => {
    try {
-      const remove = await db.Blocked_posts.destroy({ where: { id: req.params.id }, focus: true });
+      const remove = await db.blocked_posts.destroy({ where: { id: req.params.id }, focus: true });
       if (!remove)
          return next(
             errorController.errorHandler(
@@ -411,22 +411,22 @@ module.exports.deletePostsBlockedHandler = async (req, res, next) => {
 module.exports.likedPostsHandler = async (req, res, next) => {
    try {
       const posts_id = req.params.posts_id;
-      const [result, created] = await db.Liked.findOrCreate({
+      const [result, created] = await db.liked.findOrCreate({
          where: { [Op.and]: [{ posts_id }, { user_liked_posts: req.user.user_name }] },
          defaults: {
             posts_id,
             user_liked_posts: req.user.user_name,
          },
       });
-      const resultPosts = await db.Posts.findOne({
+      const resultPosts = await db.posts.findOne({
          where: { posts_id },
       });
       if (!created) {
-         await db.Notification.destroy({
+         await db.notification.destroy({
             where: Sequelize.literal(`JSON_EXTRACT(related, '$.posts_id') = '${posts_id}'`),
             focus: true,
          });
-         await db.Liked.destroy({
+         await db.liked.destroy({
             where: { id: result.id },
             focus: true,
          });
@@ -440,7 +440,7 @@ module.exports.likedPostsHandler = async (req, res, next) => {
       const personLiked = req.user.user_name;
       const owner_posts = resultPosts.user_posts;
       if (personLiked !== owner_posts) {
-         await db.Notification.create({
+         await db.notification.create({
             sender: personLiked,
             receiver: owner_posts,
             title: 'New Liked',
@@ -467,11 +467,11 @@ module.exports.likedPostsHandler = async (req, res, next) => {
 };
 module.exports.getCommentPostsHandler = async (req, res, next) => {
    try {
-      const results = await db.Comments.findAll({
+      const results = await db.comments.findAll({
          where: { posts_id: req.params.posts_id },
          include: [
             {
-               model: db.Users,
+               model: db.users,
                as: 'user_info',
                attributes: ['user_name', 'full_name', 'avatar', 'about'],
             },
@@ -494,18 +494,18 @@ module.exports.getCommentPostsHandler = async (req, res, next) => {
 module.exports.commentPostsHandler = async (req, res, next) => {
    try {
       const { posts_id, content, img, commentator, name_commentator, owner_posts } = req.body;
-      const result = await db.Comments.create({
+      const result = await db.comments.create({
          content,
          img,
          posts_id,
          user_comment: req.user.user_name,
       });
-      const user = await db.Users.findOne({
+      const user = await db.users.findOne({
          where: { user_name: result.user_comment },
          attributes: ['user_name', 'full_name', 'avatar', 'about'],
       });
       if (commentator !== owner_posts) {
-         await db.Notification.create({
+         await db.notification.create({
             sender: commentator,
             receiver: owner_posts,
             title: 'New Comment',
@@ -571,7 +571,7 @@ module.exports.getPostUserHandler = async (req, res, next) => {
             ],
          };
       }
-      const results = await db.Posts.findAll({
+      const results = await db.posts.findAll({
          attributes: {
             exclude: ['user_posts'],
             include: [
@@ -601,14 +601,14 @@ module.exports.getPostUserHandler = async (req, res, next) => {
          },
          include: [
             {
-               model: db.Users,
+               model: db.users,
                attributes: ['user_name', 'full_name', 'relationship', 'avatar', 'about'],
                as: 'user',
             },
-            { model: db.Posts_image, as: 'images' },
-            { model: db.Posts_video, as: 'videos' },
+            { model: db.posts_image, as: 'images' },
+            { model: db.posts_video, as: 'videos' },
             {
-               model: db.Blocked_posts,
+               model: db.blocked_posts,
                as: 'block_posts',
             },
          ],

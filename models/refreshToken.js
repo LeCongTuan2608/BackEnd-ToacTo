@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
        */
       static associate(models) {
          // define association here
-         refresh_token.belongsTo(models.Users, { foreignKey: 'user_name' });
+         refresh_token.belongsTo(models.users, { foreignKey: 'user_name' });
       }
    }
    refresh_token.init(

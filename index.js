@@ -52,13 +52,13 @@ app.use(
 sequelize
    .sync()
    .then(async (result) => {
-      const roles = await db.Roles.findAll();
+      const roles = await db.roles.findAll();
       // default roles and user
       if (roles.length === 0) {
          const newRoles = [{ role_name: 'ADMIN' }, { role_name: 'USER' }];
-         await db.Roles.bulkCreate(newRoles);
+         await db.roles.bulkCreate(newRoles);
 
-         await db.Users.findOrCreate({
+         await db.users.findOrCreate({
             where: { user_name: process.env.USER_NAME },
             defaults: {
                user_name: process.env.USER_NAME,

@@ -6,7 +6,7 @@ module.exports.getMessages = async (req, res, next) => {
    try {
       let messages;
       if (req.params.conversationId) {
-         messages = await db.Message.findAll({
+         messages = await db.message.findAll({
             where: {
                [Op.and]: [
                   {
@@ -52,7 +52,7 @@ module.exports.createMessages = async (req, res, next) => {
             },
          };
       }
-      const [result, created] = await db.Conversation.findOrCreate({
+      const [result, created] = await db.conversation.findOrCreate({
          where: whereCondition,
          defaults: {
             member: [req.user.user_name, ...receiver],
@@ -61,21 +61,21 @@ module.exports.createMessages = async (req, res, next) => {
          },
       });
       // create message
-      const message = await db.Message.create({
+      const message = await db.message.create({
          sender: req.user.user_name,
          content: content,
          conversation_id: result.id,
       });
       // add User
       if (created) {
-         const users = await db.Users.findAll({
+         const users = await db.users.findAll({
             where: {
                user_name: result.member,
             },
          });
          await result.addUsers(users);
       }
-      await db.Conversation.update(
+      await db.conversation.update(
          {
             last_message: { ...last_message, id: message.id },
             checked: [req.user.user_name],
@@ -83,10 +83,10 @@ module.exports.createMessages = async (req, res, next) => {
          },
          { where: whereCondition },
       );
-      const conversation = await db.Conversation.findByPk(result.id, {
+      const conversation = await db.conversation.findByPk(result.id, {
          include: [
             {
-               model: db.Users,
+               model: db.users,
                attributes: ['user_name', 'full_name', 'avatar'],
                through: {
                   attributes: [],
@@ -105,7 +105,7 @@ module.exports.removeMessages = async (req, res, next) => {
       if (!req.params.mesId)
          return next(errorController.errorHandler(res, 'id message cannot be left blank', 404));
 
-      let message = await db.Message.findByPk(req.params.mesId);
+      let message = await db.message.findByPk(req.params.mesId);
       if (message.sender === req.user.user_name) {
          message.member_remove_message = ['all'];
          await message.save();
@@ -118,7 +118,7 @@ module.exports.removeMessages = async (req, res, next) => {
          await message.save();
       }
       // Kiểm tra nếu message.id trùng với last_message.id
-      const conversation = await db.Conversation.findByPk(message.conversation_id);
+      const conversation = await db.conversation.findByPk(message.conversation_id);
       if (conversation.last_message && conversation.last_message.id === message.id) {
          conversation.last_message = { ...conversation.last_message, isRemove: true };
          conversation.checked = [...conversation.member];
