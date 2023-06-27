@@ -75,18 +75,17 @@ sequelize
    .catch((err) => {
       console.log(err);
    });
-
+httpServer.listen(PORT, (e) => {
+   console.log('Server is running on port: ', PORT);
+   console.log('Go to / to see the result');
+});
 const io = new Server(httpServer, {
    cors: {
       origin:
          process.env.MODE === 'dev'
-            ? 'http://localhost:4000'
+            ? `http://localhost:3000`
             : 'https://web-social-2c4s.onrender.com',
    },
-});
-httpServer.listen(PORT, (e) => {
-   console.log('Server is running on port: ', PORT);
-   console.log('Go to / to see the result');
 });
 
 process.on('uncaughtException', (err, origin) => {
@@ -107,6 +106,7 @@ const removeUser = (socketId) => {
 
 // handle connect socket
 io.on('connection', (socket) => {
+   console.log('Client connected');
    // console.log(`A user connected ${socket.id}`);
    // Lắng nghe sự kiện mới tin nhắn từ client
    socket.on('setup', async (user) => {
