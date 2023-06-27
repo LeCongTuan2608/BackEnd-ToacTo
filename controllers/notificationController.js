@@ -7,7 +7,29 @@ dotenv.config();
 
 module.exports.getNotificationHandler = async (req, res, next) => {
    try {
-      res.status(200).json({});
+      const results = await db.Notification.findAll({
+         where: {
+            receiver: req.user.user_name,
+         },
+         include: [
+            {
+               model: db.Users,
+               as: 'notifi_sender',
+               attributes: ['user_name', 'full_name', 'avatar'],
+            },
+         ],
+         subQuery: false,
+         limit: parseInt(req.query.limit) || 15,
+         offset: parseInt(req.query.offset) || 0,
+         order: [['createdAt', 'DESC']],
+      });
+      const notificationCount = await db.Notification.count({
+         where: {
+            receiver: req.user.user_name,
+            checked: false,
+         },
+      });
+      res.status(200).json({ results, notificationCount });
    } catch (error) {
       console.log('error', error);
       errorController.serverErrorHandle(error, res);

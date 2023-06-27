@@ -418,7 +418,14 @@ module.exports.likedPostsHandler = async (req, res, next) => {
             user_liked_posts: req.user.user_name,
          },
       });
+      const resultPosts = await db.Posts.findOne({
+         where: { posts_id },
+      });
       if (!created) {
+         await db.Notification.destroy({
+            where: Sequelize.literal(`JSON_EXTRACT(related, '$.posts_id') = '${posts_id}'`),
+            focus: true,
+         });
          await db.Liked.destroy({
             where: { id: result.id },
             focus: true,
@@ -426,12 +433,31 @@ module.exports.likedPostsHandler = async (req, res, next) => {
          return next(
             res.status(200).json({
                mes: 'unliked is success!',
+               created: false,
             }),
          );
+      }
+      const personLiked = req.user.user_name;
+      const owner_posts = resultPosts.user_posts;
+      if (personLiked !== owner_posts) {
+         await db.Notification.create({
+            sender: personLiked,
+            receiver: owner_posts,
+            title: 'New Liked',
+            content: `liked your post.`,
+            type: 'LIKE',
+            related: {
+               posts_id: posts_id,
+               owner_posts: owner_posts,
+               person_liked: personLiked,
+            },
+         });
       }
       return next(
          res.status(201).json({
             mes: 'liked is success!',
+            created: true,
+            resultPosts,
          }),
       );
    } catch (error) {
@@ -479,32 +505,19 @@ module.exports.commentPostsHandler = async (req, res, next) => {
          attributes: ['user_name', 'full_name', 'avatar', 'about'],
       });
       if (commentator !== owner_posts) {
-         const notification = await db.Notification.create({
+         await db.Notification.create({
             sender: commentator,
             receiver: owner_posts,
             title: 'New Comment',
-            content: `${name_commentator} just commented on your post.`,
+            content: `commented on your post.`,
             type: 'COMMENT',
             related: {
                posts_id: posts_id,
                owner_posts: owner_posts,
                commentator: commentator,
-               name_commentator: name_commentator,
-               avatar_commentator: user.avatar.url,
             },
          });
-         return next(
-            res.status(201).json({
-               mes: 'create is success!',
-               result: {
-                  ...result.dataValues,
-                  user_info: { ...user.dataValues },
-                  notification: { ...notification.dataValues },
-               },
-            }),
-         );
       }
-
       return next(
          res.status(201).json({
             mes: 'create is success!',

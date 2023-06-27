@@ -177,6 +177,12 @@ module.exports.followHandler = async (req, res, next) => {
          },
       });
       if (!created) {
+         await db.Notification.destroy({
+            where: Sequelize.literal(
+               `JSON_EXTRACT(related, '$.followers') = '${req.user.user_name}' AND JSON_EXTRACT(related, '$.followed') = '${req.params.user_follow}'`,
+            ),
+            focus: true,
+         });
          await db.Follow.destroy({
             where: {
                [Op.and]: [
@@ -186,6 +192,20 @@ module.exports.followHandler = async (req, res, next) => {
             },
             focus: true,
          });
+      } else {
+         if (req.user.user_name !== req.params.user_follow) {
+            await db.Notification.create({
+               sender: req.user.user_name,
+               receiver: req.params.user_follow,
+               title: 'New Follow',
+               content: `has been following you.`,
+               type: 'FOLLOW',
+               related: {
+                  followers: req.user.user_name,
+                  followed: req.params.user_follow,
+               },
+            });
+         }
       }
       next(
          res.status(201).json({

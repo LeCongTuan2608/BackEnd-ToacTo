@@ -1,9 +1,9 @@
 {
    "development": {
-      "username": "root",
-      "password": "Tuan12345678",
-      "database": "toacto2",
-      "host": "localhost",
+      "username": "duytq",
+      "password": "Hhmm.123@123",
+      "database": "TEST",
+      "host": "103.130.214.66",
       "dialect": "mysql",
       "logging": false,
       "timezone": "+07:00"

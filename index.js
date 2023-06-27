@@ -80,7 +80,7 @@ const io = new Server(httpServer, {
    cors: {
       origin:
          process.env.MODE === 'dev'
-            ? 'http://localhost:3000'
+            ? 'http://localhost:4000'
             : 'https://web-social-2c4s.onrender.com',
    },
 });
@@ -112,6 +112,7 @@ io.on('connection', (socket) => {
    socket.on('setup', async (user) => {
       console.log(`A user connected ${user}`);
    });
+   // send message
    socket.on('sendConversation', async (conver) => {
       io.emit('getConversation', conver);
    });
@@ -121,7 +122,10 @@ io.on('connection', (socket) => {
    socket.on('sendIdRemoveMes', async (mesId) => {
       io.emit('getIdRemoveMes', mesId);
    });
-
+   // send notification
+   socket.on('sendNotification', async (notification) => {
+      io.emit('getNotification', notification);
+   });
    // Lắng nghe sự kiện disconnect từ client
    socket.on('disconnect', () => {
       console.log(`A user disconnected ${socket.id}`);

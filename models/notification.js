@@ -10,7 +10,7 @@ module.exports = (sequelize, DataTypes) => {
       static associate(models) {
          // define association here
          //  models.Users.hasMany(Notification, { as: 'notification', foreignKey: 'conversation_id' });
-         Notification.belongsTo(models.Users, { foreignKey: 'sender' });
+         Notification.belongsTo(models.Users, { foreignKey: 'sender', as: 'notifi_sender' });
       }
    }
    Notification.init(
