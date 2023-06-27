@@ -26,7 +26,7 @@ module.exports.getMessages = async (req, res, next) => {
             },
             limit: req.query.limit || 15,
             offset: req.query.offset || 0,
-            order: [['createdAt', 'DESC']],
+            order: [['id', 'DESC']],
          });
       }
       next(res.status(200).json({ messages: messages ? messages.reverse() : [] }));
