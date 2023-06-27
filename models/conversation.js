@@ -12,8 +12,8 @@ module.exports = (sequelize, DataTypes) => {
          // conversation.belongsTo(models.users, { foreignKey: 'user_1', as: 'user_1_info' });
          // conversation.belongsTo(models.users, { foreignKey: 'user_2', as: 'user_2_info' });
          // conversation.belongsTo(models.users, { foreignKey: 'sender' });
-         conversation.belongsToMany(models.users, { through: 'Userconversation' });
-         models.users.belongsToMany(conversation, { through: 'Userconversation' });
+         conversation.belongsToMany(models.users, { through: 'userconversation' });
+         models.users.belongsToMany(conversation, { through: 'userconversation' });
       }
    }
    conversation.init(
