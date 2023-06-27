@@ -39,7 +39,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       {
          sequelize,
-         modelName: 'Comments',
+         modelName: 'comments',
          timestamps: true,
       },
    );

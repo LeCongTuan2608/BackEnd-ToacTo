@@ -29,7 +29,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       {
          sequelize,
-         modelName: 'Posts_video',
+         modelName: 'posts_video',
          timestamps: false,
       },
    );

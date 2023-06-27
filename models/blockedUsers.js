@@ -32,7 +32,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       {
          sequelize,
-         modelName: 'Blocked_users',
+         modelName: 'blocked_users',
          timestamps: true,
       },
    );
