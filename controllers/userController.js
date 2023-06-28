@@ -297,25 +297,6 @@ module.exports.unFollowHandler = async (req, res, next) => {
    }
 };
 
-// // get posts user other
-// // module.exports.getUserOtherPostHandler = (req, res, next) => {
-// //    try {
-// //    } catch (error) {
-// //       console.log('error', error);
-// //       errorController.serverErrorHandle(error, res);
-// //    }
-// // };
-
-// // get user online
-// module.exports.getOnlineHandler = (req, res, next) => {
-//    try {
-//       next();
-//    } catch (error) {
-//       console.log('error', error);
-//       errorController.serverErrorHandle(error, res);
-//    }
-// };
-
 // // get suggest user
 module.exports.getSuggestHandler = async (req, res, next) => {
    try {
@@ -436,15 +417,25 @@ module.exports.userBlockedHandler = async (req, res, next) => {
 
       //2. insert user blocked
       const [userBlocked, created] = await db.blocked_users.findOrCreate({
-         where: { user_name: req.user.user_name },
+         where: {
+            [Op.and]: [{ user_blocked: req.body.user_blocked }, { user_name: req.user.user_name }],
+         },
          defaults: {
             user_blocked: req.body.user_blocked,
             user_name: req.user.user_name,
          },
       });
-      if (userBlocked)
-         return next(errorController.errorHandler(res, 'This user has been blocked!', 404));
-
+      if (!created) {
+         await db.blocked_users.destroy({
+            where: {
+               [Op.and]: [
+                  { user_blocked: req.body.user_blocked },
+                  { user_name: req.user.user_name },
+               ],
+            },
+            focus: true,
+         });
+      }
       next(
          res.status(201).json({
             message: 'blocked is success',
@@ -503,6 +494,194 @@ module.exports.getProfileUserHandler = async (req, res, next) => {
       );
    } catch (error) {
       console.log('error', error);
+      errorController.serverErrorHandle(error, res);
+   }
+};
+module.exports.getBlockedByUserName = async (req, res, next) => {
+   try {
+      const blocked = await db.blocked_users.findAll({
+         where: {
+            [Op.or]: [
+               {
+                  [Op.and]: [
+                     { user_blocked: req.params.userName },
+                     { user_name: req.user.user_name },
+                  ],
+               },
+               {
+                  [Op.and]: [
+                     { user_blocked: req.user.user_name },
+                     { user_name: req.params.userName },
+                  ],
+               },
+            ],
+         },
+      });
+      next(res.status(200).json({ blocked }));
+   } catch (error) {
+      console.log('error:', error);
+      errorController.serverErrorHandle(error, res);
+   }
+};
+// ===========================SEARCH======================================
+module.exports.handleSearchAll = async (req, res, next) => {
+   try {
+      const { q, select } = req.query;
+      const selectValue = select || all;
+      if (selectValue === 'all') {
+         const usersResults = await db.users.findAll({
+            attributes: ['user_name', 'full_name', 'avatar', 'about'],
+            where: {
+               [Op.and]: [
+                  {
+                     [Op.or]: [
+                        { full_name: { [Op.substring]: q } },
+                        { user_name: { [Op.substring]: q } },
+                     ],
+                  },
+                  { user_name: { [Op.not]: req.user.user_name } },
+               ],
+            },
+            limit: parseInt(req.query?.limit) || 5,
+            offset: parseInt(req.query?.offset) || 0,
+            order: [['createdAt', 'DESC']],
+         });
+         const postsResults = await db.posts.findAll({
+            attributes: {
+               exclude: ['user_posts'],
+               include: [
+                  [
+                     Sequelize.literal(
+                        '(SELECT COUNT(*) FROM likeds WHERE likeds.posts_id = posts.posts_id)',
+                     ),
+                     'like_count',
+                  ],
+                  [
+                     Sequelize.literal(
+                        '(SELECT COUNT(*) FROM comments WHERE comments.posts_id = posts.posts_id)',
+                     ),
+                     'comment_count',
+                  ],
+                  [
+                     Sequelize.literal(`
+                    EXISTS (
+                      SELECT 1
+                      FROM likeds
+                      WHERE likeds.posts_id = posts.posts_id
+                        AND likeds.user_liked_posts = '${req.user.user_name}'
+                    )`),
+                     'status_liked',
+                  ],
+               ],
+            },
+            include: [
+               {
+                  model: db.users,
+                  attributes: ['user_name', 'full_name', 'avatar', 'about'],
+                  as: 'user',
+               },
+               { model: db.posts_image, as: 'images' },
+               { model: db.posts_video, as: 'videos' },
+               {
+                  model: db.blocked_posts,
+                  as: 'block_posts',
+               },
+            ],
+            where: {
+               [Op.and]: [
+                  { audience: { [Op.not]: 'private' } },
+                  { ban: { [Op.not]: true } },
+                  {
+                     content: { [Op.substring]: q },
+                  },
+               ],
+            },
+            subQuery: false,
+            limit: parseInt(req.query.limit) || 15,
+            offset: parseInt(req.query.offset) || 0,
+            order: [['createdAt', 'DESC']],
+         });
+         return next(res.status(200).json({ users: usersResults, posts: postsResults }));
+      } else if (selectValue === 'post') {
+         const postsResults = await db.posts.findAll({
+            attributes: {
+               exclude: ['user_posts'],
+               include: [
+                  [
+                     Sequelize.literal(
+                        '(SELECT COUNT(*) FROM likeds WHERE likeds.posts_id = posts.posts_id)',
+                     ),
+                     'like_count',
+                  ],
+                  [
+                     Sequelize.literal(
+                        '(SELECT COUNT(*) FROM comments WHERE comments.posts_id = posts.posts_id)',
+                     ),
+                     'comment_count',
+                  ],
+                  [
+                     Sequelize.literal(`
+                       EXISTS (
+                         SELECT 1
+                         FROM likeds
+                         WHERE likeds.posts_id = posts.posts_id
+                           AND likeds.user_liked_posts = '${req.user.user_name}'
+                       )`),
+                     'status_liked',
+                  ],
+               ],
+            },
+            include: [
+               {
+                  model: db.users,
+                  attributes: ['user_name', 'full_name', 'avatar', 'about'],
+                  as: 'user',
+               },
+               { model: db.posts_image, as: 'images' },
+               { model: db.posts_video, as: 'videos' },
+               {
+                  model: db.blocked_posts,
+                  as: 'block_posts',
+               },
+            ],
+            where: {
+               [Op.and]: [
+                  { audience: { [Op.not]: 'private' } },
+                  { ban: { [Op.not]: true } },
+                  {
+                     content: { [Op.substring]: q },
+                  },
+               ],
+            },
+            subQuery: false,
+            limit: parseInt(req.query.limit) || 15,
+            offset: parseInt(req.query.offset) || 0,
+            order: [['createdAt', 'DESC']],
+         });
+         return next(res.status(200).json({ posts: postsResults }));
+      } else if (selectValue === 'people') {
+         const usersResults = await db.users.findAll({
+            attributes: ['user_name', 'full_name', 'avatar', 'about'],
+            where: {
+               [Op.and]: [
+                  {
+                     [Op.or]: [
+                        { full_name: { [Op.substring]: q } },
+                        { user_name: { [Op.substring]: q } },
+                     ],
+                  },
+                  { user_name: { [Op.not]: req.user.user_name } },
+               ],
+            },
+            limit: parseInt(req.query?.limit) || 5,
+            offset: parseInt(req.query?.offset) || 0,
+            order: [['createdAt', 'DESC']],
+         });
+         return next(res.status(200).json({ users: usersResults }));
+      }
+      return next(res.status(200).json({}));
+   } catch (error) {
+      console.log('error:', error);
       errorController.serverErrorHandle(error, res);
    }
 };

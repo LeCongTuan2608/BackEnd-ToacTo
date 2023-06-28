@@ -24,6 +24,7 @@ router.route('/suggest').get([authenToken], userController.getSuggestHandler); /
 // // search user other
 router.route('/search-user/:user_name').get(userController.searchUserHandler);
 router.route('/search-user').get(userController.getAllUserHandler);
+router.route('/search').get([authenToken], userController.handleSearchAll);
 
 // // get friends
 router.route('/friends').get([authenToken], userController.getFriendsHandler); // chưa làm
@@ -42,6 +43,10 @@ router.route('/profile/:user_name').get([authenToken], userController.getProfile
 
 // // blocked
 router.route('/blocked/:id').delete([authenToken], userController.userUnBlockedHandler);
+
+router
+   .route('/blocked-by-username/:userName')
+   .get([authenToken], userController.getBlockedByUserName);
 router
    .route('/blocked')
    .get([authenToken], userController.getUserBlockedHandler)

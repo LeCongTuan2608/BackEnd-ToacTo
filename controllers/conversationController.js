@@ -95,7 +95,26 @@ module.exports.getConversationByUserName = async (req, res, next) => {
             },
          ],
       });
-      next(res.status(200).json({ conversation }));
+
+      const blocked = await db.blocked_users.findAll({
+         where: {
+            [Op.or]: [
+               {
+                  [Op.and]: [
+                     { user_blocked: req.params.userName },
+                     { user_name: req.user.user_name },
+                  ],
+               },
+               {
+                  [Op.and]: [
+                     { user_blocked: req.user.user_name },
+                     { user_name: req.params.userName },
+                  ],
+               },
+            ],
+         },
+      });
+      return next(res.status(200).json({ conversation: { ...conversation.dataValues, blocked } }));
    } catch (error) {
       console.log('error:', error);
       errorController.serverErrorHandle(error, res);
