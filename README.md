@@ -1,7 +1,7 @@
 # BackEnd-ToacTo
 backend social network
 # How to install and run project?
-
+## To run the project make sure you have nodejs installed on your computer
 ### Step 1: CLick "Download ZIP" -> unzip folder
 ![image](https://github.com/LeCongTuan2608/BackEnd-ToacTo/assets/93369087/1b1c60a3-7191-403d-80e4-f3398f1cfcc1)
 
