@@ -179,7 +179,8 @@ module.exports.followHandler = async (req, res, next) => {
       if (!created) {
          await db.notification.destroy({
             where: Sequelize.literal(
-               `JSON_EXTRACT(related, '$.followers') = '${req.user.user_name}' AND JSON_EXTRACT(related, '$.followed') = '${req.params.user_follow}'`,
+               `JSON_EXTRACT(related, '$.followers') = '${req.user.user_name}' 
+               AND JSON_EXTRACT(related, '$.followed') = '${req.params.user_follow}'`,
             ),
             focus: true,
          });
@@ -597,7 +598,7 @@ module.exports.handleSearchAll = async (req, res, next) => {
                ],
             },
             subQuery: false,
-            limit: parseInt(req.query.limit) || 15,
+            limit: parseInt(req.query.limit) || 5,
             offset: parseInt(req.query.offset) || 0,
             order: [['createdAt', 'DESC']],
          });

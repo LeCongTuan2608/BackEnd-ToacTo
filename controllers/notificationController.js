@@ -36,23 +36,16 @@ module.exports.getNotificationHandler = async (req, res, next) => {
    }
 };
 
-module.exports.banUsersHandler = async (req, res, next) => {
+module.exports.checkedNotificationHandler = async (req, res, next) => {
    try {
-      if (req.user.role_id !== 1)
-         return errorController.errorHandler(res, 'You do not have access!!', 403);
+      const result = await db.notification.findOne({ where: { id: req.params.id } });
+      if (!result)
+         return errorController.errorHandler(res, 'This notification does not exist!!', 404);
 
-      const result = await db.users.findOne({
-         where: {
-            user_name: req.params.user_name,
-         },
-         attributes: { exclude: ['pwd'] },
-      });
-      if (!result) return errorController.errorHandler(res, 'This user does not exist!!', 404);
-
-      if (result.ban) {
-         result.ban = false;
+      if (result.checked) {
+         result.checked = false;
       } else {
-         result.ban = true;
+         result.checked = true;
       }
       await result.save();
       next(res.status(200).json({ result }));
@@ -62,25 +55,24 @@ module.exports.banUsersHandler = async (req, res, next) => {
    }
 };
 
-module.exports.banPostsHandler = async (req, res, next) => {
+module.exports.deleteNotificationHandler = async (req, res, next) => {
    try {
-      if (req.user.role_id !== 1)
-         return errorController.errorHandler(res, 'You do not have access!!', 403);
+      const result = await db.notification.findOne({ where: { id: req.params.id } });
+      if (!result)
+         return errorController.errorHandler(res, 'This notification does not exist!!', 404);
 
-      const result = await db.posts.findOne({
-         where: {
-            posts_id: req.params.id,
-         },
-      });
-      if (!result) return errorController.errorHandler(res, 'This posts does not exist!!', 404);
+      await db.notification.destroy({ where: { id: result.id }, focus: true });
 
-      if (result.ban) {
-         result.ban = false;
-      } else {
-         result.ban = true;
-      }
-      await result.save();
-      next(res.status(200).json({ result }));
+      next(res.status(200).json({ mes: 'delete is success.' }));
+   } catch (error) {
+      console.log('error', error);
+      errorController.serverErrorHandle(error, res);
+   }
+};
+module.exports.checkedAllNotificationHandler = async (req, res, next) => {
+   try {
+      await db.notification.update({ checked: true }, { where: { receiver: req.user.user_name } });
+      next(res.status(200).json({ mes: 'checked is success.' }));
    } catch (error) {
       console.log('error', error);
       errorController.serverErrorHandle(error, res);

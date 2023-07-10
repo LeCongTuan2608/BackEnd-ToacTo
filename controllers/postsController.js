@@ -8,14 +8,14 @@ dotenv.config();
 
 const removeFile = async (files) => {
    try {
-      if (files.images) {
+      if (files.images && files.images.length !== 0) {
          const result = await cloudinary.api.delete_resources(
             files.images.map((file) => file.filename),
             { resource_type: 'image' },
          );
          // console.log(result);
       }
-      if (files.videos) {
+      if (files.videos && files.videos.length !== 0) {
          const result = await cloudinary.api.delete_resources(
             files.videos.map((file) => file.filename),
             { resource_type: 'video' },
@@ -188,57 +188,62 @@ module.exports.getPostsByIdHandler = async (req, res, next) => {
 module.exports.updatePostsByIdHandler = async (req, res, next) => {
    try {
       const formData = { ...req.body, ...req.files };
-      if (req.body.userUpdate !== req.user.user_name) {
+      const { old_images, old_videos } = formData;
+      const oldImagesParse = old_images && JSON.parse(old_images);
+      const oldVideosParse = old_videos && JSON.parse(old_videos);
+
+      // find post before update
+      const result = await db.posts.findOne({ where: { posts_id: req.params.id } });
+      if (result.user_posts !== req.user.user_name) {
          req.files && removeFile(req.files);
          return next(
             errorController.errorHandler(res, 'You are not allowed to create this post', 403),
          );
       }
-      // find post before update
-      const result = await db.posts.findOne({ where: { posts_id: req.params.id } });
-      //check post exists?
+
+      let removeObj = {};
+      let imageFilter = []; // lọc và lấy ra tất cả ảnh bị gỡ
+      if (oldImagesParse && oldImagesParse.length !== 0) {
+         const images = await db.posts_image.findAll({ where: { posts_id: req.params.id } });
+         if (images.length !== 0) {
+            imageFilter = images.filter((image) => {
+               return !oldImagesParse.map((img) => img.id).includes(image.id);
+            });
+            removeObj = { ...removeObj, images: imageFilter };
+         }
+      }
+
+      //
+      let videoFilter = []; // lọc và lấy ra tất cả video bị gỡ
+      if (oldVideosParse && oldVideosParse.length !== 0) {
+         const videos = await db.posts_image.findAll({ where: { posts_id: req.params.id } });
+         if (videos.length !== 0) {
+            videoFilter = videos.filter((video) => {
+               return !oldVideosParse.map((vd) => vd.id).includes(video.id);
+            });
+            removeObj = { ...removeObj, videos: videoFilter };
+         }
+      }
+      await removeFile(removeObj); // remove file trên cloud
+
+      if (imageFilter.length !== 0)
+         await db.posts_image.destroy({
+            where: { id: imageFilter.map((item) => item.id) },
+            focus: true,
+         });
+      if (videoFilter.length !== 0)
+         await db.posts_video.destroy({
+            where: { id: imageFilter.map((item) => item.id) },
+            focus: true,
+         });
+
+      // //check post exists?
       if (result === null)
          return next(errorController.errorHandler(res, 'This post could not be found', 404));
 
-      await db.posts.update(
-         {
-            audience: formData?.audience || 'public',
-            content: formData?.content,
-            user_posts: req.user.user_name,
-         },
-         {
-            where: {
-               posts_id: req.params.id,
-            },
-         },
-      );
-      // delete image in cloud
-      const imageResult = await db.posts_image.findAll({
-         where: {
-            posts_id: req.params.id,
-         },
-      });
-      const videoResult = await db.posts_video.findAll({
-         where: {
-            posts_id: req.params.id,
-         },
-      });
-      await removeFile({ images: imageResult, videos: videoResult });
-
-      //delete all images and videos
-      await db.posts_image.destroy({
-         where: {
-            posts_id: req.params.id,
-         },
-         force: true,
-      });
-      await db.posts_video.destroy({
-         where: {
-            posts_id: req.params.id,
-         },
-         force: true,
-      });
-
+      result.audience = formData?.audience || 'public';
+      result.content = formData?.content;
+      await result.save();
       //save images and videos to the database
       if (req.files) {
          if (formData.images && formData.images.length !== 0) {
@@ -256,11 +261,8 @@ module.exports.updatePostsByIdHandler = async (req, res, next) => {
       }
 
       next(
-         res.status(201).json({
+         res.status(200).json({
             formData,
-            imageResult,
-            videoResult,
-            video: formData.videos,
             mes: 'Update is success!',
          }),
       );
@@ -483,6 +485,22 @@ module.exports.getCommentPostsHandler = async (req, res, next) => {
       return next(
          res.status(200).json({
             results,
+         }),
+      );
+   } catch (error) {
+      console.log('error', error);
+      errorController.serverErrorHandle(error, res);
+   }
+};
+module.exports.deleteCommentPostsHandler = async (req, res, next) => {
+   try {
+      await db.comments.destroy({
+         where: { id: req.params.posts_id },
+         focus: true,
+      });
+      return next(
+         res.status(200).json({
+            mes: 'Delete is success!',
          }),
       );
    } catch (error) {

@@ -5,10 +5,13 @@ const authenToken = require('../controllers/middlewareController');
 
 const router = express.Router();
 
-// router
-//    .route('/by-id/:id')
-//    .get([authenToken], notificationController.getAllUsersHandler)
-//    .delete([authenToken], notificationController.banUsersHandler);
+router
+   .route('/checked-all')
+   .get([authenToken], notificationController.checkedAllNotificationHandler);
+router
+   .route('/by-id/:id')
+   .get([authenToken], notificationController.checkedNotificationHandler)
+   .delete([authenToken], notificationController.deleteNotificationHandler);
 
 // get profile this user
 router.route('/').get([authenToken], notificationController.getNotificationHandler);

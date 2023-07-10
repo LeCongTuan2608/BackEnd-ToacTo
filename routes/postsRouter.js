@@ -26,7 +26,10 @@ router
    .delete([authenToken], postController.deletePostsByIdHandler); // get feed post by id
 
 router.route('/posts/liked/:posts_id').get([authenToken], postController.likedPostsHandler);
-router.route('/posts/comment/:posts_id').get([authenToken], postController.getCommentPostsHandler);
+router
+   .route('/posts/comment/:posts_id')
+   .get([authenToken], postController.getCommentPostsHandler)
+   .delete([authenToken], postController.deleteCommentPostsHandler);
 router.route('/posts/comment').post([authenToken], postController.commentPostsHandler);
 
 router

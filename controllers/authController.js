@@ -79,20 +79,16 @@ module.exports.loginHandler = async (req, res, next) => {
             400,
          );
       //1. find user
-
       const existingUser = await db.users.findOne({
          where: {
             email: data.email,
          },
          attributes: { exclude: ['createdAt', 'updatedAt'] },
-         // raw: true,
-         // nest: true,
       });
 
       //2. if user not exists, return error
       if (!existingUser) return errorController.errorHandler(res, 'Email not found!', 400);
 
-      //2. if user exists, check password
       const isPasswordValid = comparePassword(data.pwd, existingUser.pwd);
       if (!isPasswordValid)
          return errorController.errorHandler(res, 'Wrong email or password', 404);
@@ -109,13 +105,12 @@ module.exports.loginHandler = async (req, res, next) => {
             },
          });
       }
-
       // xoa pwd khoi data tre ve
       delete existingUser.dataValues['pwd'];
 
       const dateToken = 7;
       const dateRefreshToken = 30;
-      // tao token
+      // generate token
       const token = generateToken({ ...existingUser.dataValues }, { expiresIn: `${dateToken}d` });
       const refreshToken = generateRefreshToken(
          { ...existingUser.dataValues },

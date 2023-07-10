@@ -114,7 +114,7 @@ module.exports.getConversationByUserName = async (req, res, next) => {
             ],
          },
       });
-      return next(res.status(200).json({ conversation: { ...conversation.dataValues, blocked } }));
+      return next(res.status(200).json({ conversation: { ...conversation?.dataValues, blocked } }));
    } catch (error) {
       console.log('error:', error);
       errorController.serverErrorHandle(error, res);
