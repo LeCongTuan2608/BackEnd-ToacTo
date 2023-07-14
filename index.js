@@ -98,7 +98,7 @@ httpServer.listen(PORT, (e) => {
 });
 const io = new Server(httpServer, {
    cors: {
-      origin: process.env.MODE === 'dev' ? `http://localhost:3000` : 'https://toacto.vercel.app/',
+      origin: process.env.MODE === 'dev' ? `http://localhost:3000` : 'https://toacto.vercel.app',
    },
 });
 
