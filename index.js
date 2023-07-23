@@ -36,7 +36,12 @@ const hashingPassword = (password) => {
 // ============================================================================
 
 const PORT = process.env.PORT || 5000;
-app.use(cors());
+app.use(
+   cors({
+      origin:
+         process.env.MODE === 'dev' ? ['http://localhost:4000'] : ['https://toacto.vercel.app'],
+   }),
+);
 app.use(morgan('combined'));
 
 // dùng để parse json req body
@@ -104,7 +109,7 @@ const io = new Server(httpServer, {
       transports: ['websocket', 'polling'],
    },
 });
-
+console.log(process.env.MODE);
 process.on('uncaughtException', (err, origin) => {
    //code to log the errors
    console.log(`Caught exception: ${err}\n` + `Exception origin: ${origin}`);
