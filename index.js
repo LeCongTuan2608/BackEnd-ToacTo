@@ -39,7 +39,7 @@ const PORT = process.env.PORT || 5000;
 app.use(
    cors({
       origin:
-         process.env.MODE === 'dev' ? ['http://localhost:4000'] : ['https://toacto.vercel.app'],
+         process.env.MODE === 'dev' ? ['http://localhost:3000'] : ['https://toacto.vercel.app'],
    }),
 );
 app.use(morgan('combined'));
@@ -104,7 +104,7 @@ httpServer.listen(PORT, (e) => {
 const io = new Server(httpServer, {
    cors: {
       origin:
-         process.env.MODE === 'dev' ? [`http://localhost:4000`] : ['https://toacto.vercel.app'],
+         process.env.MODE === 'dev' ? [`http://localhost:3000`] : ['https://toacto.vercel.app'],
       allowEIO3: true,
       transports: ['websocket', 'polling'],
    },
