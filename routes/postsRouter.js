@@ -8,6 +8,7 @@ const multer = require('multer');
 const { storageFile } = require('../utils/cloudinary');
 const uploadFile = multer({ storage: storageFile });
 
+router.route('/posts/video').get([authenToken], postController.getAllVideoHandler); //get feed posts blocked
 router
    .route('/posts/blocked/:id')
    .get([authenToken], postController.getPostsBlockedByIdHandler)

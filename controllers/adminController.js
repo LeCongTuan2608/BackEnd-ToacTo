@@ -2,9 +2,30 @@ const db = require('../models/index');
 
 const dotenv = require('dotenv');
 const errorController = require('./errorController');
+const cloudinary = require('cloudinary').v2;
 const { Op, Sequelize } = require('sequelize');
 dotenv.config();
 
+const removeFile = async (files) => {
+   try {
+      if (files.images && files.images.length !== 0) {
+         const result = await cloudinary.api.delete_resources(
+            files.images.map((file) => file.filename),
+            { resource_type: 'image' },
+         );
+         // console.log(result);
+      }
+      if (files.videos && files.videos.length !== 0) {
+         const result = await cloudinary.api.delete_resources(
+            files.videos.map((file) => file.filename),
+            { resource_type: 'video' },
+         );
+         // console.log(result);
+      }
+   } catch (error) {
+      console.log('error:', error);
+   }
+};
 module.exports.getAllUsersHandler = async (req, res, next) => {
    try {
       if (req.user.role_id !== 1)
@@ -227,6 +248,27 @@ module.exports.getBannedPostsHandler = async (req, res, next) => {
       });
 
       next(res.status(200).json({ results }));
+   } catch (error) {
+      console.log('error', error);
+      errorController.serverErrorHandle(error, res);
+   }
+};
+module.exports.deletePostsHandler = async (req, res, next) => {
+   try {
+      const images = await db.posts_image.findAll({ where: { posts_id: req.params.id } });
+      const videos = await db.posts_video.findAll({ where: { posts_id: req.params.id } });
+
+      await removeFile({
+         images: images.map((vid) => vid.dataValues),
+         videos: videos.map((vid) => vid.dataValues),
+      }); // remove file trên cloud
+      const deletePosts = await db.posts.destroy({
+         where: { posts_id: req.params.id },
+         focus: true,
+      });
+      if (deletePosts === 0)
+         return next(errorController.errorHandler(res, 'This post could not be found', 404));
+      next(res.status(200).json({ mes: 'delete posts is success' }));
    } catch (error) {
       console.log('error', error);
       errorController.serverErrorHandle(error, res);

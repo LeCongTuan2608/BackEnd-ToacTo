@@ -276,6 +276,13 @@ module.exports.updatePostsByIdHandler = async (req, res, next) => {
 // delete posts by id
 module.exports.deletePostsByIdHandler = async (req, res, next) => {
    try {
+      const images = await db.posts_image.findAll({ where: { posts_id: req.params.id } });
+      const videos = await db.posts_video.findAll({ where: { posts_id: req.params.id } });
+
+      await removeFile({
+         images: images.map((vid) => vid.dataValues),
+         videos: videos.map((vid) => vid.dataValues),
+      }); // remove file trên cloud
       const deletePosts = await db.posts.destroy({
          where: { posts_id: req.params.id },
          focus: true,
@@ -641,6 +648,27 @@ module.exports.getPostUserHandler = async (req, res, next) => {
             results,
          }),
       );
+   } catch (error) {
+      console.log('error', error);
+      errorController.serverErrorHandle(error, res);
+   }
+};
+
+module.exports.getAllVideoHandler = async (req, res, next) => {
+   try {
+      const results = await db.posts_video.findAll({
+         include: [
+            {
+               model: db.posts,
+               as: 'posts',
+            },
+         ],
+         subQuery: false,
+         limit: parseInt(req.query.limit) || 15,
+         offset: parseInt(req.query.offset) || 0,
+         // order: [['createdAt', 'DESC']],
+      });
+      next(res.status(200).json({ results }));
    } catch (error) {
       console.log('error', error);
       errorController.serverErrorHandle(error, res);
