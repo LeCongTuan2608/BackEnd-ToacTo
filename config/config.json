@@ -1,7 +1,7 @@
 {
    "development": {
       "username": "root",
-      "password": "1234@1234",
+      "password": "Hhmm.123",
       "database": "toacto",
       "host": "103.163.118.165",
       "dialect": "mysql",
@@ -10,16 +10,16 @@
    },
    "test": {
       "username": "duytq",
-      "password": "Hhmm.123@123",
+      "password": "Hhmm.123",
       "database": "toacto",
-      "host": "103.130.214.66",
+      "host": "103.163.118.165",
       "dialect": "mysql"
    },
    "production": {
       "username": "duytq",
-      "password": "Hhmm.123@123",
+      "password": "Hhmm.123",
       "database": "toacto",
-      "host": "103.130.214.66",
+      "host": "103.163.118.165",
       "dialect": "mysql"
    }
 }
